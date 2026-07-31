@@ -1,0 +1,306 @@
+@model SignUpVM
+<!-- start banner Area -->
+<section class="about-banner relative">
+    <div class="overlay overlay-bg"></div>
+    <div class="container">
+        <div class="row d-flex align-items-center justify-content-center">
+            <div class="about-content col-lg-12">
+                <h1 class="text-white">
+                    Sign Up
+                </h1>
+                <p class="text-white link-nav">
+                    <a href="/">Home</a>
+                    <span class="lnr lnr-arrow-right"></span>
+                    <a href="/Identity/Account/SignUp"> Sign Up</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- End banner Area -->
+<!-- Start Sign Up Area -->
+<section class="section-gap">
+    <div class="container">
+        <div class="row d-flex justify-content-center">
+            <div class="menu-content pb-40 col-lg-8">
+                <div class="title text-center">
+                    <h1 class="mb-10">Create Your Account</h1>
+                    <p>Join us to start your journey with the best travel experiences</p>
+                </div>
+            </div>
+        </div>
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="signup-form">
+                    <form asp-area="Identity" asp-controller="Account" asp-action="SignUp" method="post" class="form">
+                        @Html.AntiForgeryToken()
+                        <!-- Validation Summary -->
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" id="validationSummary" style="display: none;"></div>
+                        <div class="row">
+                            <div class="col-lg-6">
+                                <div class="form-group">
+                                    <label asp-for="CompanyName"></label>
+                                    <input asp-for="CompanyName" class="form-control" placeholder="Enter your company name">
+                                    <span asp-validation-for="CompanyName" class="text-danger small"></span>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="form-group">
+                                    <label asp-for="Name"></label>
+                                    <input asp-for="Name" class="form-control" placeholder="Enter your full name">
+                                    <span asp-validation-for="Name" class="text-danger small"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <div class="form-group">
+                                    <label asp-for="Subdomain"></label>
+                                    <div class="input-group">
+                                        <input asp-for="Subdomain" type="text" class="form-control" placeholder="yourcompany">
+                                        <div class="input-group-append">
+                                            <span class="input-group-text">.zahrawyairfly.com</span>
+                                        </div>
+                                    </div>
+                                    <span asp-validation-for="Subdomain" class="text-danger small"></span>
+                                    <small class="form-text text-muted">This will be your unique subdomain (e.g., yourcompany.zahrawyairfly.com). Only lowercase letters, numbers, and hyphens allowed.</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-6">
+                                <div class="form-group">
+                                    <label asp-for="Email"></label>
+                                    <input asp-for="Email" type="email" class="form-control" placeholder="Enter your email">
+                                    <span asp-validation-for="Email" class="text-danger small"></span>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="form-group">
+                                    <label asp-for="PhoneNumber"></label>
+                                    <input asp-for="PhoneNumber" type="tel" class="form-control" placeholder="Enter your phone number">
+                                    <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-6">
+                                <div class="form-group">
+                                    <label asp-for="UserName"></label>
+                                    <input asp-for="UserName" type="text" class="form-control" placeholder="Choose a username">
+                                    <span asp-validation-for="UserName" class="text-danger small"></span>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="form-group">
+                                    <label asp-for="Passport"></label>
+                                    <input asp-for="Passport" type="text" class="form-control" placeholder="Enter your Passport number">
+                                    <span asp-validation-for="Passport" class="text-danger small"></span>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="form-group">
+                                    <label asp-for="Currency"></label>
+                                    <select asp-for="Currency" class="form-control">
+                                        <option value="USD">USD - US Dollar</option>
+                                        <option value="EUR">EUR - Euro</option>
+                                        <option value="GBP">GBP - British Pound</option>
+                                        <option value="EGP">EGP - Egyptian Pound</option>
+                                        <option value="AED">AED - UAE Dirham</option>
+                                        <option value="SAR">SAR - Saudi Riyal</option>
+                                    </select>
+                                    <span asp-validation-for="Currency" class="text-danger small"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-6">
+                                <div class="form-group">
+                                    <label asp-for="Password"></label>
+                                    <input asp-for="Password" type="password" class="form-control" placeholder="Create a password">
+                                    <span asp-validation-for="Password" class="text-danger small"></span>
+                                    <small class="form-text text-muted">Password must be at least 6 characters long</small>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="form-group">
+                                    <label asp-for="ConfirmPassword"></label>
+                                    <input asp-for="ConfirmPassword" type="password" class="form-control" placeholder="Confirm your password">
+                                    <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" class="custom-control-input" id="agreeTerms" required>
+                                <label class="custom-control-label" for="agreeTerms">
+                                    I agree to the <a href="#" data-toggle="modal" data-target="#termsModal">Terms and Conditions</a> and <a href="#" data-toggle="modal" data-target="#privacyModal">Privacy Policy</a>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-group text-center mt-4">
+                            <button type="submit" class="primary-btn text-uppercase">Create Account</button>
+                        </div>
+                        <div class="text-center mt-3">
+                            <p class="mb-0">Already have an account? <a asp-action="Login">Sign In</a></p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- End Sign Up Area -->
+<!-- Terms and Conditions Modal -->
+<div class="modal fade" id="termsModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Terms and Conditions</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <h6>1. Acceptance of Terms</h6>
+                <p>By registering for Zahrawy AirFly, you agree to comply with these terms and conditions.</p>
+                <h6>2. Account Responsibilities</h6>
+                <p>You are responsible for maintaining the security of your account and for all activities that occur under your account.</p>
+                <h6>3. Service Usage</h6>
+                <p>You agree to use the service only for lawful purposes and in accordance with these terms.</p>
+                <h6>4. Data Protection</h6>
+                <p>We take data protection seriously and will handle your personal information in accordance with our Privacy Policy.</p>
+                <h6>5. Termination</h6>
+                <p>We reserve the right to terminate accounts that violate these terms or for any other reason.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Privacy Policy Modal -->
+<div class="modal fade" id="privacyModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Privacy Policy</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <h6>Information We Collect</h6>
+                <p>We collect information you provide during registration including company name, name, email, and contact details.</p>
+                <h6>How We Use Your Information</h6>
+                <p>We use your information to provide and improve our services, communicate with you, and ensure security.</p>
+                <h6>Data Sharing</h6>
+                <p>We do not sell your personal information. We may share data with service providers who assist in operating our platform.</p>
+                <h6>Your Rights</h6>
+                <p>You have the right to access, correct, or delete your personal information.</p>
+                <h6>Data Security</h6>
+                <p>We implement appropriate security measures to protect your information.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- jQuery and Bootstrap Scripts -->
+<!-- jQuery Validation Scripts (if needed for client-side validation) -->
+@section Styles {
+<style>
+.signup-form {
+        background: #fff;
+        padding: 40px;
+        border-radius: 10px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+        .signup-form .form-group {
+            margin-bottom: 25px;
+        }
+        .signup-form label {
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        .signup-form .primary-btn {
+            padding: 12px 40px;
+            font-size: 14px;
+        }
+    .custom-checkbox {
+        padding-left: 30px;
+    }
+    .custom-control-label {
+        cursor: pointer;
+    }
+        .custom-control-label a {
+            color: #f8b600;
+        }
+            .custom-control-label a:hover {
+                color: #f8b600;
+                text-decoration: underline;
+            }
+    .input-group-text {
+        background-color: #f8f9fa;
+    }
+    .alert-danger {
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+    .text-danger {
+        font-size: 12px;
+        margin-top: 5px;
+        display: block;
+    }
+    .field-validation-error {
+        color: #dc3545;
+        font-size: 12px;
+        margin-top: 5px;
+        display: block;
+    }
+    .input-validation-error {
+        border-color: #dc3545;
+    }
+</style>
+}
+@section Scripts {
+<script>
+    // Client-side validation for subdomain format
+    document.querySelector('form').addEventListener('submit', function(e) {
+        var subdomainInput = document.getElementById('Subdomain');
+        if (subdomainInput && subdomainInput.value) {
+            var subdomainPattern = /^[a-z0-9-]+$/;
+            if (!subdomainPattern.test(subdomainInput.value)) {
+                e.preventDefault();
+                alert('Subdomain can only contain lowercase letters, numbers, and hyphens');
+                subdomainInput.focus();
+                return false;
+            }
+            // Convert to lowercase automatically
+            subdomainInput.value = subdomainInput.value.toLowerCase();
+        }
+        return true;
+    });
+    // Auto-convert subdomain to lowercase as user types
+    var subdomainField = document.getElementById('Subdomain');
+    if (subdomainField) {
+        subdomainField.addEventListener('input', function() {
+            this.value = this.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+        });
+    }
+    // Show validation summary if there are errors
+    var validationSummary = document.getElementById('validationSummary');
+    if (validationSummary && validationSummary.innerText.trim() !== '') {
+        validationSummary.style.display = 'block';
+    }
+    // Trigger jQuery validation on form submit
+    $(document).ready(function() {
+        var form = $('form');
+        form.removeData('validator');
+        form.removeData('unobtrusiveValidation');
+        $.validator.unobtrusive.parse(form);
+    });
+</script>
+}

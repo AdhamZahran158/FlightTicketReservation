@@ -1,0 +1,456 @@
+@using ZahrawyAirFly.Domain.Entities
+@using ZahrawyAirFly.Domain.Enums
+@model UserHomeVM
+@{
+    var isAuthenticated = User.Identity?.IsAuthenticated ?? false;
+    var userName = User.Identity?.Name ?? "Guest";
+    var now = DateTime.UtcNow;
+    // Upcoming trips (bookings)
+    var upcomingBookings = Model.Bookings?
+        .Where(b => b.Flight?.DepartureUtc > now && b.Status != BookingStatus.Cancelled)
+        .OrderBy(b => b.Flight.DepartureUtc)
+        .Take(3)
+        .ToList() ?? new List<Booking>();
+    // Recent activity
+    var recentBookings = Model.Bookings?
+        .OrderByDescending(b => b.BookedAt)
+        .Take(3)
+        .ToList() ?? new List<Booking>();
+    // Featured flights
+    var featuredFlights = Model.Flights?
+        .Take(3)
+        .ToList() ?? new List<Flight>();
+    // Popular destinations
+    var popularAirports = Model.Airports?
+        .OrderBy(a => Guid.NewGuid())
+        .Take(4)
+        .ToList() ?? new List<Airport>();
+    if (!popularAirports.Any())
+    {
+        popularAirports = new List<Airport>
+        {
+            new Airport { Id = "1", City = "Paris", Country = "France", IataCode = "CDG" },
+            new Airport { Id = "2", City = "Dubai", Country = "UAE", IataCode = "DXB" },
+            new Airport { Id = "3", City = "Bangkok", Country = "Thailand", IataCode = "BKK" },
+            new Airport { Id = "4", City = "New York", Country = "USA", IataCode = "JFK" }
+        };
+    }
+}
+    @section Styles {
+<style>
+/* --- same as before, no changes --- */ 
+        .dashboard-card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+            transition: transform 0.25s ease, box-shadow 0.3s;
+            margin-bottom: 30px;
+            border: none;
+            overflow: hidden;
+        }
+            .dashboard-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 20px 30px rgba(0,0,0,0.1);
+            }
+        .card-
+        .trip-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .flight-number {
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: #1e2756;
+        }
+        .badge-status {
+            padding: 5px 12px;
+            border-radius: 50px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+        .badge-confirmed {
+            background: #d4edda;
+            color: #155724;
+        }
+        .badge-upcoming {
+            background: #cce5ff;
+            color: #004085;
+        }
+        .badge-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .trip-route {
+            font-size: 1rem;
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+        .trip-detail {
+            font-size: 0.85rem;
+            color: #777;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+            .trip-detail i {
+                width: 22px;
+                color: #f8b600;
+            }
+        .countdown {
+            background: #f8f9fa;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            color: #f8b600;
+            font-size: 0.85rem;
+            margin-top: 10px;
+        }
+        .primary-btn {
+            background: #f8b600;
+            border: none;
+            padding: 8px 20px;
+            font-weight: 600;
+            border-radius: 30px;
+            color: #222;
+            transition: 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+        }
+            .primary-btn:hover {
+                background: #e0a800;
+                color: #111;
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(248,182,0,0.3);
+            }
+        .outline-btn {
+            background: transparent;
+            border: 2px solid #f8b600;
+            padding: 6px 18px;
+            font-weight: 600;
+            border-radius: 30px;
+            color: #f8b600;
+            transition: 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+        }
+            .outline-btn:hover {
+                background: #f8b600;
+                color: #222;
+            }
+        .search-form {
+            background: #fff;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        .footer {
+            background: #1e2756;
+            color: #aaa;
+            padding: 40px 0;
+            margin-top: 40px;
+        }
+        .destination-icon {
+            font-size: 3rem;
+            color: #f8b600;
+        }
+        .flight-card .price {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #f8b600;
+        }
+        .register-section {
+            background: #fff;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+        @@media (max-width: 768px) {
+        }
+</style>
+}
+    <!-- Banner -->
+    <section class="about-banner relative">
+        <div class="overlay overlay-bg"></div>
+        <div class="container">
+            <div class="row d-flex align-items-center justify-content-center">
+                <div class="about-content col-lg-12">
+                    <h1 class="text-white">My Dashboard</h1>
+                    <p class="text-white link-nav">
+                    <a class="link-nav" href="/">Home</a>
+                        <span class="lnr lnr-arrow-right"></span>
+                    <a class="link-nav" href="#">Dashboard</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Dashboard Content -->
+    <section class="section-gap">
+        <div class="container">
+            <!-- Welcome Section -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="dashboard-card">
+                        <div class="card-body d-flex justify-content-between align-items-center flex-wrap">
+                            <div>
+                                @if (isAuthenticated)
+                                {
+                                    <h2>Welcome back, @User.Identity!.Name! ✈</h2>
+                                    <p class="mb-0">Ready for your next adventure? Explore flights, manage bookings, and discover exclusive offers.</p>
+                                }
+                                else
+                                {
+                                    <h2>Welcome to Zahrawy Air Fly ✈</h2>
+                                    <p class="mb-0">Discover amazing flights and start your journey today. Create an account to book and manage your trips.</p>
+                                }
+                            </div>
+                            <div>
+                                @if (isAuthenticated)
+                                {
+                                    <a href="/user/flight/search" class="primary-btn mt-3 mt-sm-0"><i class="fas fa-search"></i> Search Flights</a>
+                                }
+                                else
+                                {
+                                    <a href="/identity/account/signup" class="primary-btn mt-3 mt-sm-0"><i class="fas fa-user-plus"></i> Register Now</a>
+                                    <a href="/identity/account/login" class="outline-btn mt-3 mt-sm-0 ml-2">Sign In</a>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @if (!isAuthenticated)
+            {
+                <!-- Call to action for unauthenticated users -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="register-section">
+                            <h4>Join Zahrawy Air Fly Today</h4>
+                            <p>Sign up to access exclusive deals, manage your bookings, and personalize your travel experience.</p>
+                            <a href="/identity/account/signup" class="primary-btn"><i class="fas fa-user-plus"></i> Create Account</a>
+                        </div>
+                    </div>
+                </div>
+            }
+            <!-- Upcoming Trips (only for authenticated users) -->
+            @if (isAuthenticated)
+            {
+                <div class="row mb-3">
+                    <div class="col-12 d-flex justify-content-between align-items-center">
+                        <h3 class="title" style="font-size: 1.8rem;"><i class="fas fa-calendar-alt"></i> Upcoming Trips</h3>
+                        <a href="/user/booking/mybookings" class="outline-btn">View All <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                </div>
+                <div class="row">
+                    @if (upcomingBookings.Any())
+                    {
+                        foreach (var booking in upcomingBookings)
+                        {
+                            var flight = booking.Flight;
+                            var departure = flight?.DepartureUtc ?? DateTime.UtcNow;
+                            var timeLeft = departure - now;
+                            var days = timeLeft.Days;
+                            var hours = timeLeft.Hours;
+                            string badgeClass = "";
+                            switch (booking.Status)
+                            {
+                                case BookingStatus.Confirmed: badgeClass = "badge-confirmed"; break;
+                                case BookingStatus.Pending: badgeClass = "badge-pending"; break;
+                                default: badgeClass = "badge-upcoming"; break;
+                            }
+                            var firstSeat = booking.BookingSeats?.FirstOrDefault();
+                            var seatNumber = firstSeat?.FlightSeat?.Seat?.SeatNumber ?? "N/A";
+                            var seatClass = firstSeat?.FlightSeat?.Seat?.Class.ToString() ?? "N/A";
+                            <div class="col-lg-4 col-md-6">
+                                <div class="dashboard-card">
+                                    <div class="card-body">
+                                        <div class="trip-header">
+                                            <span class="flight-number">@flight?.FlightNumber</span>
+                                            <span class="badge-status @badgeClass">@booking.Status</span>
+                                        </div>
+                                        <div class="trip-route">
+                                            <i class="fas fa-plane-departure text-warning"></i>
+                                            @flight?.OriginAirport?.IataCode (@flight?.OriginAirport?.Name) → @flight?.DestinationAirport?.IataCode (@flight?.DestinationAirport?.Name)
+                                        </div>
+                                        <div class="trip-detail"><i class="fas fa-calendar-alt"></i> Departure: @flight?.DepartureUtc.ToString("dd MMM yyyy, HH:mm")</div>
+                                        <div class="trip-detail"><i class="fas fa-clock"></i> Arrival: @flight?.ArrivalUtc.ToString("dd MMM yyyy, HH:mm")</div>
+                                        <div class="trip-detail"><i class="fas fa-gate"></i> Gate: @flight?.Gate | Terminal: @flight?.Terminal</div>
+                                        <div class="trip-detail"><i class="fas fa-chair"></i> Seat: @seatNumber (@seatClass)</div>
+                                        <div class="countdown"><i class="fas fa-hourglass-half"></i> Countdown: @days days @hours hours</div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="col-12">
+                            <div class="dashboard-card text-center py-4">
+                                <i class="fas fa-calendar-check fa-3x text-muted"></i>
+                                <h5 class="mt-3">No upcoming trips</h5>
+                                <p>Start planning your next adventure!</p>
+                                <a href="/user/flight/search" class="primary-btn">Search Flights</a>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            <!-- Quick Flight Search -->
+            <div class="row mt-5">
+                <div class="col-12">
+                    <h3 class="title" style="font-size: 1.8rem;"><i class="fas fa-search"></i> Quick Flight Search</h3>
+                    <div class="search-form">
+                        <form method="get" action="/user/flight/search">
+                            <div class="row">
+                                <div class="col-md-3 mb-3">
+                                    <input type="text" name="origin" class="form-control" placeholder="From (e.g., JFK)">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <input type="text" name="destination" class="form-control" placeholder="To (e.g., LHR)">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <input type="date" name="departureDate" class="form-control">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <button type="submit" class="primary-btn w-100">Search <i class="fas fa-arrow-right"></i></button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <!-- Featured Flights -->
+            <div class="row mt-5">
+                <div class="col-12 d-flex justify-content-between align-items-center">
+                    <h3 class="title" style="font-size: 1.8rem;"><i class="fas fa-plane"></i> Featured Flights</h3>
+                    <a href="/user/flight/search" class="outline-btn">View All <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+            <div class="row">
+                @if (featuredFlights.Any())
+                {
+                    foreach (var flight in featuredFlights)
+                    {
+                        var duration = flight.ArrivalUtc - flight.DepartureUtc;
+                        var cheapestPrice = flight.BasePriceEconomy;
+                        <div class="col-lg-4 col-md-6">
+                            <div class="dashboard-card flight-card">
+                                <div class="card-body">
+                                    <div class="trip-header">
+                                        <span class="flight-number">@flight.FlightNumber</span>
+                                        <span class="badge-status badge-upcoming">Available</span>
+                                    </div>
+                                    <div class="trip-route">
+                                        <i class="fas fa-plane-departure text-warning"></i>
+                                        @flight.OriginAirport?.IataCode (@flight.OriginAirport?.Name) → @flight.DestinationAirport?.IataCode (@flight.DestinationAirport?.Name)
+                                    </div>
+                                    <div class="trip-detail"><i class="fas fa-calendar-alt"></i> Departure: @flight.DepartureUtc.ToString("dd MMM yyyy, HH:mm")</div>
+                                    <div class="trip-detail"><i class="fas fa-clock"></i> Arrival: @flight.ArrivalUtc.ToString("dd MMM yyyy, HH:mm")</div>
+                                    <div class="trip-detail"><i class="fas fa-hourglass-half"></i> Duration: @duration.Hours h @duration.Minutes m</div>
+                                    <div class="mt-2">
+                                        <span class="price">$@cheapestPrice.ToString("F0")</span>
+                                        <span class="text-muted small">from</span>
+                                    </div>
+                                    <div class="mt-3">
+                                        <a href="/user/flight/book?id=@flight.Id" class="primary-btn btn-sm">Book Now <i class="fas fa-arrow-right"></i></a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="col-12">
+                        <div class="dashboard-card text-center py-4">
+                            <i class="fas fa-plane-slash fa-3x text-muted"></i>
+                            <h5 class="mt-3">No flights available</h5>
+                            <p>Check back later for new routes.</p>
+                        </div>
+                    </div>
+                }
+            </div>
+            <!-- Special Offers & Notifications -->
+            <div class="row mt-5">
+                <div class="col-md-6">
+                    <div class="dashboard-card">
+                        <div class="card-body">
+                            <div class="badge-status" style="background:#f8b60020; color:#f8b600;"><i class="fas fa-tag"></i> Limited Time</div>
+                            <h4 class="mt-2">Summer Flash Sale!</h4>
+                            <p>Get 20% off on all flights to Europe. Use code <strong>SUMMER20</strong> at checkout.</p>
+                            <a href="/user/flight/search" class="outline-btn">Book Now</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="dashboard-card">
+                        <div class="card-body">
+                            <div class="badge-status" style="background:#f8b60020; color:#f8b600;"><i class="fas fa-bell"></i> Notification</div>
+                            <h4 class="mt-2">Check-in now open</h4>
+                            <p>Online check-in for flight ZA202 (London→Dubai) is now available.</p>
+                            <a href="#" class="outline-btn">Check-in</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Popular Destinations -->
+            <div class="row mt-5">
+                <div class="col-12">
+                    <h3 class="title" style="font-size: 1.8rem;"><i class="fas fa-globe"></i> Popular Destinations</h3>
+                </div>
+                @foreach (var airport in popularAirports)
+                {
+                    <div class="col-md-3 col-6">
+                        <div class="dashboard-card text-center">
+                            <div class="card-body">
+                                <i class="fas fa-plane-departure destination-icon"></i>
+                                <h5 class="mt-2">@airport.City</h5>
+                                <p class="text-muted">@airport.Country</p>
+                                <p class="text-muted small">@airport.IataCode</p>
+                                <a href="/user/flight/search?destination=@airport.IataCode" class="outline-btn btn-sm">Explore</a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+            <!-- Recent Activity (only for authenticated users) -->
+            @if (isAuthenticated)
+            {
+                <div class="row mt-5">
+                    <div class="col-12">
+                        <div class="dashboard-card">
+                            <div class="card-body">
+                                <h3 class="title" style="font-size: 1.5rem;"><i class="fas fa-history"></i> Recent Activity</h3>
+                                <ul class="list-unstyled mt-3">
+                                    @if (recentBookings.Any())
+                                    {
+                                        foreach (var booking in recentBookings)
+                                        {
+                                            var action = booking.Status == BookingStatus.Cancelled ? "cancelled" : "booked";
+                                            var flightInfo = booking.Flight != null ? $"{booking.Flight.FlightNumber} ({booking.Flight.OriginAirport?.IataCode} → {booking.Flight.DestinationAirport?.IataCode})" : "a flight";
+                                            <li class="py-2 border-bottom">
+                                                <i class="fas fa-ticket-alt text-warning"></i>
+                                                You @action @flightInfo – @booking.BookedAt.ToString("dd MMM yyyy, HH:mm")
+                                            </li>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <li class="py-2 text-muted">No recent activity.</li>
+                                    }
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </section>

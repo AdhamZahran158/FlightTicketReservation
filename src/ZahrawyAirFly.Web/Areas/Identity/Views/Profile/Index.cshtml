@@ -1,0 +1,279 @@
+@using Microsoft.AspNetCore.Identity
+@model Tenant
+@{
+    ViewData["Title"] = "My Profile";
+}
+    @section Styles {
+<style>
+        .card-dashboard {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            border: none;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        .primary-btn {
+            background: #f8b600;
+            border: none;
+            padding: 10px 28px;
+            font-weight: 600;
+            border-radius: 30px;
+            color: #222;
+            transition: 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+            .primary-btn:hover {
+                background: #e0a800;
+                color: #111;
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(248,182,0,0.3);
+            }
+        .outline-btn {
+            background: transparent;
+            border: 2px solid #f8b600;
+            padding: 8px 20px;
+            font-weight: 600;
+            border-radius: 30px;
+            color: #f8b600;
+            transition: 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+        }
+            .outline-btn:hover {
+                background: #f8b600;
+                color: #222;
+            }
+        .danger-btn {
+            background: #dc3545;
+            border: none;
+            padding: 10px 28px;
+            font-weight: 600;
+            border-radius: 30px;
+            color: #fff;
+            transition: 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+            .danger-btn:hover {
+                background: #c82333;
+                color: #fff;
+                transform: translateY(-2px);
+            }
+        .form-group label {
+            font-weight: 500;
+            color: #333;
+        }
+        .form-control {
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            padding: 12px 15px;
+            font-family: 'Poppins', sans-serif;
+        }
+            .form-control:focus {
+                border-color: #f8b600;
+                box-shadow: 0 0 0 0.2rem rgba(248,182,0,0.25);
+            }
+        .profile-pic {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #f8b600;
+        }
+        @@media (max-width: 768px) {
+        }
+</style>
+}
+    <!-- Banner -->
+    <section class="about-banner relative">
+        <div class="overlay overlay-bg"></div>
+        <div class="container">
+            <div class="row d-flex align-items-center justify-content-center">
+                <div class="about-content col-lg-12">
+                    <h1 class="text-white">My Profile</h1>
+                    <p class="text-white link-nav">
+                        <a href="/">Home</a>
+                        <span class="lnr lnr-arrow-right"></span>
+                        <label>Profile</label>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Main Content -->
+    <section class="section-gap">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <!-- Success / Error Messages -->
+                    @if (TempData["success"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            @TempData["success"]
+                            <button type="button" class="close" data-dismiss="alert">&times;</button>
+                        </div>
+                    }
+                    @if (TempData["error"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            @TempData["error"]
+                            <button type="button" class="close" data-dismiss="alert">&times;</button>
+                        </div>
+                    }
+                    <!-- Profile Picture -->
+                    <div class="text-center mb-4">
+                        @if (!string.IsNullOrEmpty(Model.LogoUrl))
+                        {
+                            <img src="@Model.LogoUrl" alt="Profile" class="profile-pic" />
+                        }
+                        else
+                        {
+                            <div class="profile-pic" style="background:#e9ecef; display:flex; align-items:center; justify-content:center; color:#aaa; font-size:3rem;">
+                                <i class="fas fa-user"></i>
+                            </div>
+                        }
+                        <p class="text-muted small mt-2">Profile picture (from Logo URL)</p>
+                    </div>
+                    <!-- Profile Edit Form -->
+                    <div class="card-dashboard">
+                        <h4 class="mb-3"><i class="fas fa-user-edit"></i> Personal Information</h4>
+                        <form method="post" action="@Url.Action("UpdateProfile", "Profile", new { area = "Identity" })">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" asp-for="Id" />
+                            <input type="hidden" asp-for="UserName" />
+                            <input type="hidden" asp-for="Email" />
+                            <input type="hidden" asp-for="EmailConfirmed" />
+                            <input type="hidden" asp-for="PhoneNumber" />
+                            <input type="hidden" asp-for="PhoneNumberConfirmed" />
+                            <input type="hidden" asp-for="TwoFactorEnabled" />
+                            <input type="hidden" asp-for="LockoutEnabled" />
+                            <input type="hidden" asp-for="AccessFailedCount" />
+                            <input type="hidden" asp-for="SecurityStamp" />
+                            <input type="hidden" asp-for="ConcurrencyStamp" />
+                            <input type="hidden" asp-for="PasswordHash" />
+                            <input type="hidden" asp-for="IsActive" />
+                            <input type="hidden" asp-for="IsDeleted" />
+                            <input type="hidden" asp-for="CreatedAt" />
+                            <input type="hidden" asp-for="UpdatedAt" />
+                            <input type="hidden" asp-for="Subdomain" />
+                            <div class="form-group">
+                                <label>Full Name</label>
+                                <input asp-for="Name" class="form-control" placeholder="Your full name" />
+                            </div>
+                            <div class="form-group">
+                                <label>Company Name</label>
+                                <input asp-for="CompanyName" class="form-control" placeholder="Company name (optional)" />
+                            </div>
+                            <div class="form-group">
+                                <label>Passport Number</label>
+                                <input asp-for="PassportNumber" class="form-control" placeholder="Passport number (optional)" />
+                            </div>
+                            <div class="form-group">
+                                <label>Currency</label>
+                                <select asp-for="Currency" class="form-control">
+                                    <option value="USD">USD - US Dollar</option>
+                                    <option value="EUR">EUR - Euro</option>
+                                    <option value="GBP">GBP - British Pound</option>
+                                    <option value="EGP">EGP - Egyptian Pound</option>
+                                    <option value="AED">AED - UAE Dirham</option>
+                                    <option value="SAR">SAR - Saudi Riyal</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Logo URL (profile picture)</label>
+                                <input asp-for="LogoUrl" class="form-control" placeholder="https://example.com/logo.png" />
+                            </div>
+                            <div class="form-group text-center mt-4">
+                                <button type="submit" class="primary-btn"><i class="fas fa-save"></i> Update Profile</button>
+                            </div>
+                        </form>
+                    </div>
+                    <!-- Change Password / Security -->
+                    <div class="card-dashboard">
+                        <h4 class="mb-3"><i class="fas fa-lock"></i> Security</h4>
+                        <div class="d-flex flex-wrap gap-3">
+                            <a href="/Identity/Account/Manage/ChangePassword" class="outline-btn"><i class="fas fa-key"></i> Change Password</a>
+                        </div>
+                    </div>
+                    <!-- Delete Account -->
+                    <div class="card-dashboard">
+                        <h4 class="mb-3 text-danger"><i class="fas fa-exclamation-triangle"></i> Danger Zone</h4>
+                        <p class="text-muted">Once you delete your account, all your data will be permanently removed. This action cannot be undone.</p>
+                        <form id="deleteForm" method="post" action="@Url.Action("DeleteAccount", "Profile", new { area = "Identity" })">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="password" id="deletePassword" value="" />
+                            <button type="button" class="danger-btn" onclick="initiateDelete()"><i class="fas fa-trash-alt"></i> Delete Account</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+@section Scripts {
+<script>
+        function initiateDelete() {
+            if (window.showConfirm) {
+                window.showConfirm(
+                    'Delete Account',
+                    'Are you sure you want to delete your account? This action is irreversible and all your data will be permanently removed.',
+                    function() {
+                        Swal.fire({
+                            title: 'Enter your password',
+                            input: 'password',
+                            inputPlaceholder: 'Type your password',
+                            inputAttributes: {
+                                autocapitalize: 'off',
+                                autocorrect: 'off'
+                            },
+                            showCancelButton: true,
+                            confirmButtonColor: '#dc3545',
+                            cancelButtonColor: '#6c757d',
+                            confirmButtonText: 'Delete',
+                            cancelButtonText: 'Cancel',
+                            preConfirm: function(password) {
+                                return new Promise(function(resolve, reject) {
+                                    if (!password || password.length === 0) {
+                                        reject('Password is required');
+                                    } else {
+                                        resolve(password);
+                                    }
+                                });
+                            }
+                        }).then(function(result) {
+                            if (result.isConfirmed) {
+                                document.getElementById('deletePassword').value = result.value;
+                                document.getElementById('deleteForm').submit();
+                            }
+                        }).catch(function(error) {
+                            if (error === 'Password is required') {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Password Required',
+                                    text: 'Please enter your password to delete your account.',
+                                    confirmButtonColor: '#f8b600'
+                                });
+                            }
+                        });
+                    }
+                );
+            } else {
+                // Fallback for older browsers
+                if (confirm('Delete your account?')) {
+                    var pwd = prompt('Enter your password:');
+                    if (pwd !== null) {
+                        document.getElementById('deletePassword').value = pwd;
+                        document.getElementById('deleteForm').submit();
+                    }
+                }
+            }
+        }
+    </script>
+}

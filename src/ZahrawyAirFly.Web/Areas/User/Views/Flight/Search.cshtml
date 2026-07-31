@@ -1,0 +1,367 @@
+@using ZahrawyAirFly.Domain.Entities
+@model IEnumerable<Flight>
+
+@section Styles {
+    <style>
+        .flight-card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            transition: 0.25s;
+            margin-bottom: 25px;
+            overflow: hidden;
+        }
+
+            .flight-card:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            }
+
+        .flight-header {
+            background: #f8f9fa;
+            padding: 12px 20px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .flight-number {
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: #1e2756;
+        }
+
+        .flight-status {
+            font-size: 0.75rem;
+            padding: 4px 12px;
+            border-radius: 50px;
+            font-weight: 500;
+        }
+
+        .status-scheduled {
+            background: #cce5ff;
+            color: #004085;
+        }
+
+        .status-boarding {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-departed {
+            background: #cfe2ff;
+            color: #004d40;
+        }
+
+        .status-delayed {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .flight-body {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-around;
+            padding: 20px;
+            gap: 15px;
+        }
+
+        .route-info {
+            text-align: center;
+            flex: 1 1 150px;
+            min-width: 120px;
+        }
+
+        .airport-code {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: #1e2756;
+        }
+
+        .airport-name {
+            font-size: 0.75rem;
+            color: #666;
+        }
+
+        .flight-time {
+            font-size: 1rem;
+            font-weight: 500;
+            margin-top: 5px;
+        }
+
+        .duration {
+            font-size: 0.8rem;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .pricing {
+            text-align: right;
+            flex: 0 0 140px;
+            min-width: 120px;
+        }
+
+        .price {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #f8b600;
+        }
+
+        .price-label {
+            font-size: 0.7rem;
+            color: #666;
+            display: block;
+        }
+
+        .btn-book {
+            background: #f8b600;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 30px;
+            color: #222;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 8px;
+        }
+
+            .btn-book:hover {
+                background: #e0a800;
+                color: #111;
+            }
+
+        .badge-aircraft {
+            background: #e9ecef;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            margin-left: 10px;
+        }
+
+        .search-form {
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            margin-bottom: 40px;
+        }
+
+            .search-form .form-group label {
+                font-weight: 500;
+            }
+
+            .search-form .btn-search {
+                background: #f8b600;
+                border: none;
+                padding: 10px 30px;
+                border-radius: 30px;
+                color: #222;
+                font-weight: 600;
+            }
+
+                .search-form .btn-search:hover {
+                    background: #e0a800;
+                }
+
+        .no-flights {
+            text-align: center;
+            padding: 50px 0;
+            color: #666;
+        }
+
+            .no-flights i {
+                font-size: 3rem;
+                color: #ccc;
+                margin-bottom: 15px;
+            }
+        /* Responsive tweaks */
+        @@media (max-width: 768px) {
+            .flight-body {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .pricing {
+                text-align: center;
+                margin-top: 15px;
+                flex: 1 1 auto;
+            }
+
+            .route-info {
+                flex: 1 1 auto;
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+}
+
+<!-- Banner -->
+<section class="about-banner relative">
+    <div class="overlay overlay-bg"></div>
+    <div class="container">
+        <div class="row d-flex align-items-center justify-content-center">
+            <div class="about-content col-lg-12">
+                <h1 class="text-white">Available Flights</h1>
+                <p class="text-white link-nav">
+                    <a href="/user/home/index">Home</a>
+                    <span class="lnr lnr-arrow-right"></span>
+                    <a>Flights</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Flight Listings -->
+<section class="section-gap">
+    <div class="container">
+        <div class="title text-center mb-4">
+            <h1 class="mb-10">Find Your Next Adventure</h1>
+            <p>Search flights by origin, destination, and departure date</p>
+        </div>
+
+        <!-- Search Form -->
+        <div class="search-form">
+            <form method="get" action="@Url.Action("Search", "Flight")" id="searchForm">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label><i class="fas fa-plane-departure"></i> From</label>
+                            <select name="originId" class="form-control">
+                                <option value="">Any Airport</option>
+                                @if (ViewBag.Airports != null)
+                                {
+                                    foreach (var airport in ViewBag.Airports as IEnumerable<Airport>)
+                                    {
+                                        <option value="@airport.Id" selected="@(ViewBag.SelectedOriginId == airport.Id)">@airport.Name (@airport.IataCode)</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label><i class="fas fa-plane-arrival"></i> To</label>
+                            <select name="destinationId" class="form-control">
+                                <option value="">Any Airport</option>
+                                @if (ViewBag.Airports != null)
+                                {
+                                    foreach (var airport in ViewBag.Airports as IEnumerable<Airport>)
+                                    {
+                                        <option value="@airport.Id" selected="@(ViewBag.SelectedDestId == airport.Id)">@airport.Name (@airport.IataCode)</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label><i class="fas fa-calendar-alt"></i> Date</label>
+                            <input type="date" name="departureDate" class="form-control" value="@ViewBag.SelectedDate" />
+                        </div>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn-search w-100"><i class="fas fa-search"></i> Search</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Results Summary -->
+        @if (Model != null && Model.Any())
+        {
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <span><i class="fas fa-plane"></i> @Model.Count() flights found</span>
+                <div>
+                    <span class="mr-2">Sort by:</span>
+                    <select id="sortSelect" class="form-control-sm" style="border-radius:30px; padding:4px 15px; border:1px solid #ddd;">
+                        <option value="departure">Departure (earliest)</option>
+                        <option value="price">Price (lowest)</option>
+                        <option value="duration">Duration (shortest)</option>
+                    </select>
+                </div>
+            </div>
+        }
+
+        <!-- Flight Cards -->
+        <div class="flight-list" id="flightsContainer">
+            @if (Model != null && Model.Any())
+            {
+                foreach (var flight in Model)
+                {
+                    var duration = flight.ArrivalUtc - flight.DepartureUtc;
+                    var cheapestPrice = flight.BasePriceEconomy;
+                    <div class="flight-card" data-departure="@flight.DepartureUtc.ToString("yyyy-MM-ddTHH:mm:ss")"
+                         data-price="@cheapestPrice"
+                         data-duration="@duration.TotalMinutes">
+                        <div class="flight-header">
+                            <div>
+                                <span class="flight-number">@flight.FlightNumber</span>
+                                <span class="badge-aircraft"><i class="fas fa-fighter-jet"></i> @flight.Aircraft?.Model</span>
+                            </div>
+                            <span class="flight-status status-@flight.Status.ToString().ToLower()">@flight.Status</span>
+                        </div>
+                        <div class="flight-body">
+                            <div class="route-info">
+                                <div class="airport-code">@flight.OriginAirport?.IataCode</div>
+                                <div class="airport-name">@flight.OriginAirport?.Name</div>
+                                <div class="flight-time">@flight.DepartureUtc.ToString("dd MMM, HH:mm")</div>
+                            </div>
+                            <div class="route-info">
+                                <i class="fas fa-long-arrow-alt-right fa-2x text-muted"></i>
+                                <div class="duration">@duration.Hours h @duration.Minutes m</div>
+                            </div>
+                            <div class="route-info">
+                                <div class="airport-code">@flight.DestinationAirport?.IataCode</div>
+                                <div class="airport-name">@flight.DestinationAirport?.Name</div>
+                                <div class="flight-time">@flight.ArrivalUtc.ToString("dd MMM, HH:mm")</div>
+                            </div>
+                            <div class="pricing">
+                                <div class="price">$@cheapestPrice.ToString("F0")</div>
+                                <span class="price-label">from</span>
+                                <a href="Book?id=@flight.Id" class="btn-book">Book Now <i class="fas fa-arrow-right"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="no-flights">
+                    <i class="fas fa-plane-slash"></i>
+                    <h4>No flights found</h4>
+                    <p>Try adjusting your search criteria or browse all flights.</p>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        // Optional client-side sorting
+        const sortSelect = document.getElementById('sortSelect');
+        const flightsContainer = document.getElementById('flightsContainer');
+        if (sortSelect && flightsContainer) {
+            sortSelect.addEventListener('change', function() {
+                const cards = Array.from(document.querySelectorAll('.flight-card'));
+                const sortBy = this.value;
+                cards.sort((a, b) => {
+                    if (sortBy === 'departure') {
+                        return new Date(a.dataset.departure) - new Date(b.dataset.departure);
+                    } else if (sortBy === 'price') {
+                        return parseFloat(a.dataset.price) - parseFloat(b.dataset.price);
+                    } else if (sortBy === 'duration') {
+                        return parseInt(a.dataset.duration) - parseInt(b.dataset.duration);
+                    }
+                    return 0;
+                });
+                flightsContainer.innerHTML = '';
+                cards.forEach(card => flightsContainer.appendChild(card));
+            });
+        }
+    </script>
+}

@@ -1,0 +1,558 @@
+================================================================================
+                    ZAHRAWY AIRFLY - SYSTEM ANALYSIS DOCUMENT
+                    Multi-Tenant SaaS Airline Booking Platform
+================================================================================
+                         Graduation Project - Team 6
+                              Date: 2026-03-11
+================================================================================
+
+
+================================================================================
+1. PROJECT OVERVIEW
+================================================================================
+
+Project Name    : Zahrawy AirFly
+Project Type    : Multi-Tenant SaaS (Software as a Service)
+Domain          : Airline Ticket Booking & Seat Reservation
+Technology      : ASP.NET Core 9 MVC, SQL Server, Redis, SignalR
+Architecture    : Clean Architecture (Domain, Application, Infrastructure, Web)
+Design Patterns : Repository, Unit of Work, SOLID, Dependency Injection, 
+                  Strategy, Observer, Factory, Generic CRUD
+
+
+================================================================================
+2. PROBLEM STATEMENT
+================================================================================
+
+Airlines worldwide need a unified, secure, and scalable platform that allows 
+multiple airline companies to independently operate their booking systems under 
+a single SaaS infrastructure. Each airline requires full control over:
+
+  - Flight scheduling and route management
+  - Aircraft fleet and seat configuration
+  - Pricing, taxes, fees, offers, and discount policies
+  - Booking, cancellation, and modification rules
+  - Baggage weight limits and charges
+
+Passengers need a seamless, visually immersive booking experience that includes 
+an interactive airplane seat map simulation — where they can view the airplane 
+interior, see available seats in real-time, select their preferred seat, and 
+complete the booking process securely.
+
+Current challenges in the market:
+  1. Most systems lack true multi-tenancy with full data isolation
+  2. Seat selection often lacks visual simulation of the airplane interior
+  3. Security vulnerabilities in booking references allow tampering
+  4. Limited real-time seat availability updates during peak booking periods
+  5. Inflexible pricing models that don't support offers and discount codes
+
+
+================================================================================
+3. PROJECT OBJECTIVES
+================================================================================
+
+  1. Build a multi-tenant SaaS platform supporting multiple airline companies
+  2. Implement complete flight management (CRUD, scheduling, routes)
+  3. Create an interactive airplane seat simulation for visual seat selection
+  4. Develop a robust booking engine with reserve, pay, modify, and cancel flows
+  5. Build a flexible pricing engine supporting offers, discounts, taxes, and fees
+  6. Implement strong security measures (JWT, CSRF, Rate Limiting, Encryption)
+  7. Provide real-time seat updates using SignalR
+  8. Integrate email notification system for booking confirmations
+  9. Use Redis caching for high performance and fast response times
+  10. Deliver a clean, maintainable codebase following SOLID and Clean Architecture
+
+
+================================================================================
+4. SYSTEM ACTORS (USERS)
+================================================================================
+
++-------------------+----------------------------------------------------------+
+|      Actor        |                      Description                         |
++-------------------+----------------------------------------------------------+
+| Super Admin       | Platform owner. Manages all tenants (airline companies),  |
+|                   | system-wide settings, and airport database.               |
++-------------------+----------------------------------------------------------+
+| Airline Admin     | Airline company administrator. Manages flights, aircraft, |
+|                   | pricing, offers, discounts, policies, and staff accounts. |
++-------------------+----------------------------------------------------------+
+| Airline Staff     | Operational employee. Handles day-to-day booking          |
+|                   | operations, cancellations, refunds, and customer support. |
++-------------------+----------------------------------------------------------+
+| Passenger         | End user / traveler. Searches flights, selects seats via  |
+|                   | the airplane simulation, books tickets, manages bookings, |
+|                   | applies discount codes, and receives notifications.       |
++-------------------+----------------------------------------------------------+
+
+
+================================================================================
+5. FUNCTIONAL REQUIREMENTS
+================================================================================
+
+5.1 AUTHENTICATION & AUTHORIZATION
+-----------------------------------
+  FR-01  User registration with email confirmation
+  FR-02  User login with JWT + Cookie authentication
+  FR-03  Role-based access control (SuperAdmin, AirlineAdmin, Staff, Passenger)
+  FR-04  Password reset via email link
+  FR-05  Refresh token mechanism for session management
+  FR-06  Email verification with encrypted activation links
+
+5.2 TENANT (AIRLINE) MANAGEMENT
+---------------------------------
+  FR-07  Super Admin can create, update, activate/deactivate airline tenants
+  FR-08  Each tenant has unique subdomain and branding (logo, company name)
+  FR-09  Full data isolation between tenants (multi-tenant query filters)
+  FR-10  Tenant-specific currency configuration
+  FR-11  Tenant can manage its own admin and staff accounts
+
+5.3 AIRPORT MANAGEMENT
+------------------------
+  FR-12  Super Admin can add/edit/delete airports
+  FR-13  Each airport has IATA code, ICAO code, name, city, country, timezone
+  FR-14  Airports have geographic coordinates (latitude, longitude)
+  FR-15  Airport search by IATA code, city, or country
+  FR-16  Airports are shared across all tenants (global resource)
+
+5.4 AIRCRAFT & FLEET MANAGEMENT
+---------------------------------
+  FR-17  Airline Admin can add/edit/deactivate aircraft in their fleet
+  FR-18  Each aircraft has model, registration code, seat configuration
+  FR-19  Seat layout stored as JSON for flexible configuration
+  FR-20  Define number of rows, seats per row, classes (Economy/Business/First)
+  FR-21  Each seat has attributes: row, column, class, zone, window/aisle/exit
+
+5.5 FLIGHT MANAGEMENT
+-----------------------
+  FR-22  Airline Admin can create, update, cancel flights
+  FR-23  Each flight links to aircraft, origin airport, destination airport
+  FR-24  Flight has departure/arrival times (UTC), gate, terminal
+  FR-25  Flight status management (Scheduled, Boarding, Departed, Arrived, 
+         Cancelled, Delayed)
+  FR-26  Set base prices per class (Economy, Business, First)
+  FR-27  Configure baggage limits (max kg, free kg, extra per kg rate)
+  FR-28  Flight search by origin, destination, date, class
+
+5.6 SEAT MANAGEMENT & SIMULATION
+-----------------------------------
+  FR-29  Generate seat map per flight from aircraft seat configuration
+  FR-30  Interactive airplane interior simulation (SVG-based)
+  FR-31  Real-time seat status display (Available, Booked, Selected, Blocked)
+  FR-32  Seat selection locks the seat temporarily via Redis (hold for 10 min)
+  FR-33  Hover/click shows seat details (class, price, position, offer price)
+  FR-34  Real-time updates via SignalR when seats are booked by other users
+  FR-35  Seat price override capability per individual seat
+
+5.7 BOOKING ENGINE
+--------------------
+  FR-36  Passenger can create a booking by selecting flight + seats
+  FR-37  Booking generates encrypted, tamper-proof reference number
+  FR-38  Passenger must agree to terms and conditions before booking
+  FR-39  Booking stores passenger details per seat (name, passport)
+  FR-40  Booking modification allowed if airline policy permits and deadline 
+         not passed
+  FR-41  Booking cancellation with configurable penalty percentage
+  FR-42  Airline can cancel flights and auto-refund/compensate passengers
+  FR-43  Full booking audit trail (BookingLog for every action)
+  FR-44  Booking status flow: Pending -> Confirmed -> Modified -> Cancelled
+
+5.8 PRICING ENGINE (OFFERS & DISCOUNTS)
+------------------------------------------
+  FR-45  Base price per class configured at flight level
+  FR-46  Airline Admin can create time-limited Offers (% or fixed discount)
+  FR-47  Offers can be linked to specific flights (many-to-many)
+  FR-48  Passenger can apply discount codes at checkout
+  FR-49  Discount codes have: min booking amount, max uses, validity period
+  FR-50  Final price calculation: 
+         Base - Offer - Discount + Taxes + Fees + Extra Baggage = Total
+  FR-51  Airline configures taxes and fees (percentage or fixed, per tenant)
+
+5.9 PAYMENT PROCESSING
+------------------------
+  FR-52  Record payment details (amount, currency, method, transaction ref)
+  FR-53  Payment status tracking (Pending, Completed, Refunded, Failed)
+  FR-54  Support multiple payment methods (Card, Wallet)
+  FR-55  Refund processing for cancellations
+
+5.10 POLICY MANAGEMENT
+------------------------
+  FR-56  Airline Admin configures cancellation policy (allow/deny + deadline)
+  FR-57  Configure cancellation penalty percentage
+  FR-58  Configure modification policy (allow/deny + deadline + fee)
+  FR-59  Set terms and conditions text per airline
+
+5.11 NOTIFICATION SYSTEM
+--------------------------
+  FR-60  Email notifications for: registration, booking confirmation, 
+         cancellation, modification, flight cancellation, payment receipt
+  FR-61  In-app notifications (bell icon, unread count)
+  FR-62  Mark notifications as read
+  FR-63  SMTP integration for email delivery
+
+5.12 DASHBOARD & ANALYTICS
+----------------------------
+  FR-64  Airline Admin dashboard: revenue, bookings/day, popular routes
+  FR-65  Super Admin dashboard: tenant statistics, system health
+  FR-66  Passenger dashboard: my bookings, upcoming flights
+
+
+================================================================================
+6. NON-FUNCTIONAL REQUIREMENTS
+================================================================================
+
+6.1 PERFORMANCE
+-----------------
+  NFR-01  Page load time under 2 seconds for all pages
+  NFR-02  Redis caching for frequently accessed data (flights, seats, airports)
+  NFR-03  Seat availability response under 500ms (cached)
+  NFR-04  Support 1000+ concurrent users per tenant
+
+6.2 SECURITY
+--------------
+  NFR-05  Cookie + JWT authentication for MVC application
+  NFR-06  CSRF protection on all state-changing forms
+  NFR-07  Rate limiting (fixed + sliding window) per IP and per user
+  NFR-08  Security headers: HSTS, X-Content-Type-Options, X-Frame-Options, CSP
+  NFR-09  AES-256 encrypted booking references
+  NFR-10  HMAC signatures on booking data to prevent tampering
+  NFR-11  BCrypt password hashing with salt
+  NFR-12  Input validation using FluentValidation + ModelState
+  NFR-13  SQL injection prevention via EF Core parameterized queries
+
+6.3 SCALABILITY
+-----------------
+  NFR-14  Multi-tenant architecture with isolated data per airline
+  NFR-15  Stateless application layer (cache in Redis, not in memory)
+  NFR-16  Database indexing strategy for high-frequency queries
+
+6.4 MAINTAINABILITY
+---------------------
+  NFR-17  Clean Architecture with separated layers
+  NFR-18  SOLID principles applied across all services
+  NFR-19  Generic CRUD service to reduce code duplication
+  NFR-20  Repository + Unit of Work pattern for data access
+  NFR-21  Dependency Injection for loose coupling
+  NFR-22  Soft delete (IsDeleted flag) instead of hard delete
+
+6.5 USABILITY
+---------------
+  NFR-23  Responsive design for mobile and desktop
+  NFR-24  Interactive seat simulation with animations
+  NFR-25  Clear error messages and validation feedback
+  NFR-26  Multi-language support ready (Arabic + English)
+
+
+================================================================================
+7. USE CASE DESCRIPTIONS
+================================================================================
+
+USE CASE UC-01: SEARCH FLIGHTS
+-------------------------------
+  Actor       : Passenger
+  Precondition: User is on the flight search page
+  Flow:
+    1. Passenger selects origin airport (IATA code or city name)
+    2. Passenger selects destination airport
+    3. Passenger selects travel date and class preference
+    4. System queries available flights (with Redis cache)
+    5. System displays matching flights with prices (including active offers)
+    6. Passenger selects a flight to view details
+  Postcondition: Flight details page is displayed
+
+USE CASE UC-02: BOOK A SEAT
+-----------------------------
+  Actor       : Passenger
+  Precondition: Passenger is logged in and viewing a flight
+  Flow:
+    1. System displays interactive airplane seat simulation
+    2. Seat map shows real-time availability (via SignalR)
+    3. Passenger hovers over seat to see price breakdown
+    4. Passenger clicks seat to select it (locked for 10 min via Redis)
+    5. Passenger enters passenger details (name, passport number)
+    6. Passenger optionally enters discount code
+    7. System calculates final price (Base - Offer - Discount + Tax + Fee)
+    8. Passenger reviews booking summary and agrees to terms
+    9. Passenger proceeds to payment
+    10. System confirms booking and sends email notification
+    11. System generates encrypted booking reference
+  Postcondition: Booking is confirmed, seat is marked as booked
+
+USE CASE UC-03: CANCEL BOOKING
+---------------------------------
+  Actor       : Passenger or Airline Staff
+  Precondition: Booking exists and is in Confirmed status
+  Flow:
+    1. User navigates to booking details
+    2. System checks airline's cancellation policy
+    3. If cancellation allowed and before deadline:
+       a. System calculates penalty (if any)
+       b. System updates booking status to Cancelled
+       c. System releases the seat(s)
+       d. System initiates refund (total - penalty)
+       e. System sends cancellation email notification
+    4. If cancellation not allowed or past deadline:
+       a. System shows error message
+  Postcondition: Booking is cancelled, seat is released
+
+USE CASE UC-04: MANAGE FLIGHTS (AIRLINE)
+-------------------------------------------
+  Actor       : Airline Admin
+  Precondition: Admin is logged in to airline dashboard
+  Flow:
+    1. Admin navigates to flight management
+    2. Admin creates new flight: selects aircraft, origin/destination airports,
+       departure/arrival times, sets base prices, baggage policy
+    3. System generates seat map from aircraft configuration
+    4. Admin can optionally attach an active offer to the flight
+    5. Admin publishes the flight (status: Scheduled)
+  Postcondition: Flight is available for passenger booking
+
+USE CASE UC-05: CREATE OFFER
+-------------------------------
+  Actor       : Airline Admin
+  Precondition: Admin is logged in
+  Flow:
+    1. Admin navigates to Offers management
+    2. Admin creates new offer: name, discount value, percentage/fixed,
+       start date, end date, max usage count
+    3. Admin assigns offer to specific flights
+    4. System displays offer price alongside base price on flight search
+  Postcondition: Offer is active and applied to selected flights
+
+USE CASE UC-06: APPLY DISCOUNT CODE
+--------------------------------------
+  Actor       : Passenger
+  Precondition: Passenger is in booking checkout
+  Flow:
+    1. Passenger enters discount code
+    2. System validates code: active, within date range, not exceeded max uses,
+       booking meets minimum amount
+    3. If valid: system applies discount to total and recalculates
+    4. If invalid: system shows appropriate error message
+  Postcondition: Discount applied to booking total
+
+USE CASE UC-07: AIRLINE CANCELS FLIGHT
+-----------------------------------------
+  Actor       : Airline Admin / Staff
+  Precondition: Flight exists with confirmed bookings
+  Flow:
+    1. Airline staff updates flight status to Cancelled
+    2. System identifies all confirmed bookings on this flight
+    3. System auto-cancels all bookings
+    4. System initiates full refunds (no penalty - airline's fault)
+    5. System sends notification to all affected passengers
+    6. System releases all seats
+  Postcondition: Flight cancelled, all passengers refunded and notified
+
+
+================================================================================
+8. TECHNOLOGY STACK
+================================================================================
+
++------------------------+-----------------------------------------------------+
+|      Component         |                   Technology                        |
++------------------------+-----------------------------------------------------+
+| Framework              | ASP.NET Core 9 MVC (Razor Views)                    |
+| Language               | C# 13                                               |
+| Database               | Microsoft SQL Server                                |
+| ORM                    | Entity Framework Core 9                             |
+| Caching                | Redis (StackExchange.Redis)                         |
+| Real-Time              | SignalR                                             |
+| Authentication         | Cookie Auth + JWT Bearer Tokens                     |
+| Email                  | SMTP (System.Net.Mail / MailKit)                    |
+| Validation             | FluentValidation                                    |
+| Object Mapping         | AutoMapper                                          |
+| Architecture           | Clean Architecture (4 layers + shared)              |
+| Design Patterns        | Repository, UoW, SOLID, DI, Strategy, Observer      |
+| Frontend               | Razor Views, Bootstrap, jQuery, Custom JS/CSS       |
+| Version Control        | Git + GitHub                                        |
++------------------------+-----------------------------------------------------+
+
+
+================================================================================
+9. SYSTEM ARCHITECTURE
+================================================================================
+
+The system follows Clean Architecture with 5 projects:
+
+  +---------------------------------------------------------------+
+  |                    ZahrawyAirFly.Web (MVC)                     |
+  |  Controllers, Views (.cshtml), Middleware, wwwroot (CSS/JS)    |
+  +---------------------------------------------------------------+
+                |                              |
+                v                              v
+  +-----------------------------+  +-----------------------------+
+  | ZahrawyAirFly.Application   |  | ZahrawyAirFly.Infrastructure|
+  | Services, DTOs, Interfaces, |  | EF Core (SQL Server),       |
+  | Mapping, Validators         |  | Repositories, UoW,          |
+  |                             |  | Redis, SMTP Services        |
+  +-----------------------------+  +-----------------------------+
+                |                              |
+                v                              v
+  +---------------------------------------------------------------+
+  |                    ZahrawyAirFly.Domain                        |
+  |        Entities, Enums, Interfaces (Zero Dependencies)         |
+  +---------------------------------------------------------------+
+                              |
+                              v
+  +---------------------------------------------------------------+
+  |                    ZahrawyAirFly.Shared                        |
+  |     Central CRUD, Base Classes, Helpers, Extensions            |
+  +---------------------------------------------------------------+
+
+
+  Dependency Flow:
+    Web (MVC) --> Application --> Domain
+    Web (MVC) --> Infrastructure --> Domain
+    Infrastructure implements Application interfaces
+    Shared is referenced by all layers
+
+
+================================================================================
+10. SECURITY ARCHITECTURE
+================================================================================
+
++----------------------------+-------------------------------------------------+
+|        Feature             |              Implementation                     |
++----------------------------+-------------------------------------------------+
+| Authentication             | Cookie Auth (MVC views) + JWT (API endpoints)   |
+|                            | with refresh token rotation                     |
++----------------------------+-------------------------------------------------+
+| Authorization              | Role-based: SuperAdmin, AirlineAdmin,           |
+|                            | Staff, Passenger                                |
++----------------------------+-------------------------------------------------+
+| Rate Limiting              | ASP.NET Core built-in Rate Limiting             |
+|                            | Fixed window + Sliding window per IP/user       |
++----------------------------+-------------------------------------------------+
+| CSRF Protection            | Anti-forgery tokens on all forms                |
+|                            | [ValidateAntiForgeryToken] on POST actions      |
++----------------------------+-------------------------------------------------+
+| Security Headers           | HSTS (HTTP Strict Transport Security)           |
+|                            | X-Content-Type-Options: nosniff                 |
+|                            | X-Frame-Options: DENY                           |
+|                            | Content-Security-Policy                         |
++----------------------------+-------------------------------------------------+
+| Booking Encryption         | AES-256 encrypted booking reference numbers     |
+|                            | Prevents guessing or tampering with booking IDs |
++----------------------------+-------------------------------------------------+
+| Anti-Tampering             | HMAC-SHA256 signatures on booking data          |
+|                            | Validates data integrity on every access        |
++----------------------------+-------------------------------------------------+
+| Input Validation           | FluentValidation on all DTOs                    |
+|                            | ModelState validation in MVC controllers        |
++----------------------------+-------------------------------------------------+
+| SQL Injection Prevention   | EF Core parameterized queries only              |
+|                            | No raw SQL without parameters                   |
++----------------------------+-------------------------------------------------+
+| Password Security          | BCrypt hashing with random salt                 |
+|                            | Minimum 8 characters, complexity enforced       |
++----------------------------+-------------------------------------------------+
+| Encrypted Links            | Email confirmation and password reset links     |
+|                            | use encrypted, time-limited tokens              |
++----------------------------+-------------------------------------------------+
+
+
+================================================================================
+11. CACHING STRATEGY (REDIS)
+================================================================================
+
++---------------------------+--------+-----------------------------------------+
+|      Data                 |  TTL   |            Justification                |
++---------------------------+--------+-----------------------------------------+
+| Flight search results     | 2 min  | Frequently queried, rarely changes      |
+| Seat availability map     | 30 sec | Changes on booking; needs short TTL     |
+| Airport list              | 1 hour | Almost never changes                    |
+| Active offers per flight  | 5 min  | Changes infrequently                    |
+| Airline policies          | 10 min | Rarely changes                          |
+| Tax/Fee structures        | 10 min | Rarely changes                          |
+| Discount code validation  | 1 min  | Prevent abuse / rapid retry             |
+| User sessions             | 30 min | Reduce database hits                    |
+| Seat lock (hold)          | 10 min | Temporary hold during booking flow      |
++---------------------------+--------+-----------------------------------------+
+
+
+================================================================================
+12. PRICING ENGINE LOGIC
+================================================================================
+
+Formula:
+  Final Price = (Base Price per Class)
+              - (Offer Discount, if flight has active offer)
+              - (Discount Code, if passenger applied one)
+              + (Taxes: sum of applicable TaxFee entries)
+              + (Fees: sum of applicable fee entries)
+              + (Extra Baggage: (requested kg - free kg) x rate per kg)
+
+Example Calculation:
+  +----------------------------------+----------+
+  | Item                             | Amount   |
+  +----------------------------------+----------+
+  | Economy Base Price               | $200.00  |
+  | Active Offer -15%                | -$30.00  |
+  | Subtotal after Offer             | $170.00  |
+  | Discount Code "SAVE20" (fixed)   | -$20.00  |
+  | Subtotal after Discount          | $150.00  |
+  | Airport Tax 10%                  | +$15.00  |
+  | Service Fee (fixed)              | +$5.00   |
+  | Extra Baggage 5kg x $3/kg        | +$15.00  |
+  +----------------------------------+----------+
+  | FINAL TOTAL                      | $185.00  |
+  +----------------------------------+----------+
+
+Rules:
+  - Offers are automatic (applied if flight has active offer within date range)
+  - Discount codes are manual (passenger enters code at checkout)
+  - Offer discount applied before discount code
+  - Taxes and fees applied after all discounts
+  - Extra baggage calculated only if exceeding free allowance
+  - Final price cannot be negative (minimum $0)
+
+
+================================================================================
+13. DATA DICTIONARY (KEY ENTITIES SUMMARY)
+================================================================================
+
+Entity          | Description
+----------------|-----------------------------------------------------------
+Tenant          | An airline company using the SaaS platform
+Airport         | Global airport with IATA/ICAO codes, city, country, coords
+User            | System user (admin, staff, or passenger) belonging to tenant
+Aircraft        | Airplane in an airline's fleet with seat configuration
+Seat            | Individual seat in an aircraft with position & class
+Flight          | Scheduled flight from origin to destination airport
+FlightSeat      | Instance of a seat for a specific flight (with status)
+Booking         | A reservation made by a passenger for a flight
+BookingSeat     | Links a booking to specific seat(s) with passenger details
+Payment         | Payment record for a booking
+Offer           | Time-limited promotional discount for flights
+FlightOffer     | Junction: links offers to specific flights (many-to-many)
+Discount        | Coupon/promo code passengers can apply at checkout
+Policy          | Airline's cancellation/modification rules
+TaxFee          | Tax or fee configured by airline (percentage or fixed)
+Notification    | In-app or email notification sent to user
+BookingLog      | Audit trail entry for booking actions
+
+
+================================================================================
+14. ESTIMATED FILE COUNT PER PHASE
+================================================================================
+
++-------+--------------------------------------------+------------+
+| Phase |          Components                        | Est. Files |
++-------+--------------------------------------------+------------+
+|   1   | Solution + Domain (Entities, Enums) + Shared|   ~35      |
+|   2   | Infrastructure (SQL Server, Repos, UoW)     |   ~30      |
+|   3   | Application (Services, DTOs, Pricing)       |   ~40      |
+|   4   | Web MVC (Controllers, Views, Layouts)       |   ~35      |
+|   5   | Security (Auth, Rate Limit, CSRF, Headers)  |   ~10      |
+|   6   | Redis + SMTP + Notifications                |   ~8       |
+|   7   | Seat Simulation UI (Razor + JS + CSS)       |   ~8       |
++-------+--------------------------------------------+------------+
+| Total |                                            |  ~165+     |
++-------+--------------------------------------------+------------+
+
+
+================================================================================
+                              END OF DOCUMENT
+                    Zahrawy AirFly - System Analysis v1.0
+================================================================================

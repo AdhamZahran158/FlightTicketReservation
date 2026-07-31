@@ -1,0 +1,269 @@
+@model ValidateOtpVM
+<!-- start banner Area -->
+<section class="about-banner relative">
+    <div class="overlay overlay-bg"></div>
+    <div class="container">
+        <div class="row d-flex align-items-center justify-content-center">
+            <div class="about-content col-lg-12">
+                <h1 class="text-white">
+                    Verify OTP
+                </h1>
+                <p class="text-white link-nav">
+                    <a href="index.html">Home</a>
+                    <span class="lnr lnr-arrow-right"></span>
+                    <a href="login.html"> Sign In</a>
+                    <span class="lnr lnr-arrow-right"></span>
+                    <label> Verify OTP</label>
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- End banner Area -->
+<!-- Start OTP Verification Area -->
+<section class="section-gap">
+    <div class="container">
+        <div class="row d-flex justify-content-center">
+            <div class="menu-content pb-40 col-lg-8">
+                <div class="title text-center">
+                    <h1 class="mb-10">Enter Verification Code</h1>
+                    <p>Please enter the 6-digit OTP sent to your email address</p>
+                </div>
+            </div>
+        </div>
+        <div class="row justify-content-center">
+            <div class="col-lg-6">
+                <div class="otp-form">
+                    <form asp-area="Identity" asp-controller="Account" asp-action="ValidateOtp" method="post" class="form" id="otpForm">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="UserId" />
+                        <input type="hidden" name="OTP" id="aggregatedOtp" />
+                        <div class="form-group">
+                            <label asp-for="OTP"></label>
+                            <div class="otp-container">
+                                <input type="text" class="otp-input" id="otp1" maxlength="1" pattern="[0-9]" inputmode="numeric" autofocus />
+                                <input type="text" class="otp-input" id="otp2" maxlength="1" pattern="[0-9]" inputmode="numeric" />
+                                <input type="text" class="otp-input" id="otp3" maxlength="1" pattern="[0-9]" inputmode="numeric" />
+                                <input type="text" class="otp-input" id="otp4" maxlength="1" pattern="[0-9]" inputmode="numeric" />
+                                <input type="text" class="otp-input" id="otp5" maxlength="1" pattern="[0-9]" inputmode="numeric" />
+                                <input type="text" class="otp-input" id="otp6" maxlength="1" pattern="[0-9]" inputmode="numeric" />
+                            </div>
+                            <span asp-validation-for="OTP" class="text-danger"></span>
+                            <small class="form-text text-muted">Enter the 6-digit verification code sent to your email</small>
+                        </div>
+                        <div class="form-group text-center mt-4">
+                            <button type="submit" class="primary-btn text-uppercase">Verify OTP</button>
+                        </div>
+                        <div class="text-center mt-3">
+                            <p class="mb-0">
+                                <a href="/identity/account/login" class="back-to-login">
+                                    <i class="fa fa-arrow-left"></i> Back to Sign In
+                                </a>
+                            </p>
+                            <p class="mt-2">
+                                <a asp-action="ForgotPassword" asp-area="Identity" asp-controller="Account" class="resend-otp">
+                                    <i class="fa fa-refresh"></i> Resend OTP Code
+                                </a>
+                            </p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- End OTP Verification Area -->
+@section Styles {
+<style>
+.otp-form {
+        background: #fff;
+        padding: 40px;
+        border-radius: 10px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+        .otp-form .form-group {
+            margin-bottom: 25px;
+        }
+        .otp-form label {
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        .otp-form .primary-btn {
+            padding: 12px 40px;
+            font-size: 14px;
+            min-width: 200px;
+            background: #f8b600;
+            border: none;
+            border-radius: 30px;
+            color: #222;
+            font-weight: 600;
+            transition: 0.3s;
+            cursor: pointer;
+        }
+            .otp-form .primary-btn:hover {
+                background: #e0a800;
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(248,182,0,0.3);
+            }
+    .otp-container {
+        display: flex;
+        justify-content: center;
+        gap: 12px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+    .otp-input {
+        width: 60px;
+        height: 70px;
+        text-align: center;
+        font-size: 24px;
+        font-weight: 600;
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        font-family: 'Poppins', monospace;
+    }
+        .otp-input:focus {
+            border-color: #f8b600;
+            box-shadow: 0 0 0 0.2rem rgba(248,182,0,0.25);
+            outline: none;
+        }
+        .otp-input::-webkit-inner-spin-button,
+        .otp-input::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+    .otp-form .back-to-login {
+        color: #f8b600;
+        font-size: 14px;
+        display: inline-block;
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+        .otp-form .back-to-login i {
+            margin-right: 5px;
+        }
+        .otp-form .back-to-login:hover {
+            color: #f8b600;
+            text-decoration: underline;
+        }
+    .resend-otp {
+        color: #6c757d;
+        font-size: 13px;
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+        .resend-otp i {
+            margin-right: 5px;
+        }
+        .resend-otp:hover {
+            color: #f8b600;
+            text-decoration: underline;
+        }
+    .otp-form .form-text {
+        font-size: 12px;
+        margin-top: 5px;
+        text-align: center;
+        display: block;
+    }
+    .text-danger {
+        font-size: 12px;
+        margin-top: 5px;
+        display: block;
+        text-align: center;
+        color: #dc3545;
+    }
+    /* Mobile responsive */
+    @@media (max-width: 768px) {
+        .otp-input {
+            width: 45px;
+            height: 55px;
+            font-size: 20px;
+        }
+        .otp-container {
+            gap: 8px;
+        }
+    }
+</style>
+}
+@section Scripts {
+<script>
+    // Get all OTP input fields
+    const otpInputs = document.querySelectorAll('.otp-input');
+    const aggregatedOtpField = document.getElementById('aggregatedOtp');
+    const otpForm = document.getElementById('otpForm');
+    // Auto-focus and move to next input
+    otpInputs.forEach((input, index) => {
+        input.addEventListener('input', function(e) {
+            // Only allow digits
+            this.value = this.value.replace(/[^0-9]/g, '');
+            // Move to next input if current has a value and not the last input
+            if (this.value.length === 1 && index < otpInputs.length - 1) {
+                otpInputs[index + 1].focus();
+            }
+            // Aggregate and update the hidden field
+            aggregateOtp();
+        });
+        // Handle backspace key to move to previous input
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Backspace' && this.value === '' && index > 0) {
+                otpInputs[index - 1].focus();
+            }
+        });
+        // Handle paste event
+        input.addEventListener('paste', function(e) {
+            e.preventDefault();
+            const pastedData = (e.clipboardData || window.clipboardData).getData('text');
+            const pastedDigits = pastedData.replace(/[^0-9]/g, '').slice(0, 6);
+            if (pastedDigits) {
+                // Fill the OTP inputs with pasted digits
+                for (let i = 0; i < pastedDigits.length && i < otpInputs.length; i++) {
+                    otpInputs[i].value = pastedDigits[i];
+                }
+                // Focus on the next empty input or last input
+                const nextEmptyIndex = Math.min(pastedDigits.length, otpInputs.length - 1);
+                if (nextEmptyIndex < otpInputs.length) {
+                    otpInputs[nextEmptyIndex].focus();
+                }
+                aggregateOtp();
+            }
+        });
+    });
+    // Aggregate OTP from all inputs
+    function aggregateOtp() {
+        let otpCode = '';
+        otpInputs.forEach(input => {
+            otpCode += input.value;
+        });
+        aggregatedOtpField.value = otpCode;
+        // Auto-submit when all 6 digits are entered
+        if (otpCode.length === 6) {
+            setTimeout(() => {
+                if (aggregatedOtpField.value.length === 6) {
+                    otpForm.submit();
+                }
+            }, 300);
+        }
+    }
+    // Form validation before submit
+    otpForm.addEventListener('submit', function(e) {
+        const otpCode = aggregatedOtpField.value;
+        if (!otpCode || otpCode.length !== 6) {
+            e.preventDefault();
+            alert('Please enter the complete 6-digit OTP code');
+            return false;
+        }
+        if (!/^\d{6}$/.test(otpCode)) {
+            e.preventDefault();
+            alert('OTP must contain only numbers (0-9)');
+            return false;
+        }
+        return true;
+    });
+    // Auto-focus first input on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        otpInputs[0]?.focus();
+    });
+</script>
+}

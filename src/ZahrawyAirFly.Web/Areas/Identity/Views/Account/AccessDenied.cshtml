@@ -1,0 +1,171 @@
+﻿@{
+    ViewData["Title"] = "Access Denied";
+    // You can optionally set the layout if you want the full header/footer.
+    // If you want to use the area layout, you'd set Layout = "~/Areas/User/Views/Shared/_Layout.cshtml" etc.
+    // For a standalone simple page, we keep it without layout.
+    Layout = null;
+}
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"] | TravelAir</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #f9f9ff;
+            color: #222;
+            margin: 0;
+            padding: 0;
+        }
+
+        .overlay {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            bottom: 0;
+        }
+
+        .overlay-bg {
+            background: linear-gradient(90deg, #1e2756 0%, #2d3a6e 100%);
+            opacity: 0.85;
+        }
+
+        .about-banner {
+            background: url('https://images.pexels.com/photos/62623/wing-plane-flying-airplane-62623.jpeg?auto=compress&cs=tinysrgb&w=1600') center/cover no-repeat;
+            position: relative;
+            padding: 80px 0;
+        }
+
+        .about-content h1 {
+            font-size: 48px;
+            font-weight: 700;
+        }
+
+        .link-nav a, .link-nav span {
+            color: #fff;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+            .link-nav a:hover {
+                color: #f8b600;
+            }
+
+        .section-gap {
+            padding: 60px 0;
+        }
+
+        .card-denied {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            padding: 40px;
+            text-align: center;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .lock-icon {
+            font-size: 5rem;
+            color: #dc3545;
+        }
+
+        .primary-btn {
+            background: #f8b600;
+            border: none;
+            padding: 10px 28px;
+            font-weight: 600;
+            border-radius: 30px;
+            color: #222;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            transition: 0.3s;
+        }
+
+            .primary-btn:hover {
+                background: #e0a800;
+                color: #111;
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(248,182,0,0.3);
+            }
+
+        .outline-btn {
+            background: transparent;
+            border: 2px solid #f8b600;
+            padding: 8px 20px;
+            font-weight: 600;
+            border-radius: 30px;
+            color: #f8b600;
+            transition: 0.3s;
+            display: inline-block;
+            text-decoration: none;
+        }
+
+            .outline-btn:hover {
+                background: #f8b600;
+                color: #222;
+            }
+
+        @@media (max-width: 768px) {
+            .about-banner {
+                padding: 60px 0;
+            }
+
+            .about-content h1 {
+                font-size: 28px;
+            }
+
+            .section-gap {
+                padding: 40px 0;
+            }
+
+            .card-denied {
+                padding: 25px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Banner -->
+    <section class="about-banner relative">
+        <div class="overlay overlay-bg"></div>
+        <div class="container">
+            <div class="row d-flex align-items-center justify-content-center">
+                <div class="about-content col-lg-12">
+                    <h1 class="text-white">Access Denied</h1>
+                    <p class="text-white link-nav">
+                        <a href="/user/home/index">Home</a>
+                        <span class="lnr lnr-arrow-right"></span>
+                        <label>Access Denied</label>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Content -->
+    <section class="section-gap">
+        <div class="container">
+            <div class="card-denied">
+                <div class="lock-icon"><i class="fas fa-lock"></i></div>
+                <h2 class="mt-3">You don't have permission</h2>
+                <p class="text-muted">You are not authorized to view this page. Please contact your administrator if you believe this is an error.</p>
+                <div class="mt-4">
+                    <a href="/user/home/index" class="primary-btn"><i class="fas fa-home"></i> Go Home</a>
+                    <a href="javascript:history.back()" class="outline-btn ml-2"><i class="fas fa-arrow-left"></i> Go Back</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>

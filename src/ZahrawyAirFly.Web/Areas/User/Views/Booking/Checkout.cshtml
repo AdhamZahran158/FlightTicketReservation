@@ -1,0 +1,200 @@
+@using ZahrawyAirFly.Domain.Entities
+@using ZahrawyAirFly.Domain.Enums
+@model Booking
+@{
+    var flight = Model.Flight;
+    var bookingSeats = Model.BookingSeats.ToList();
+    // Compute totals based on seats
+    decimal subtotal = 0;
+    var seatLineItems = new List<(string seatNumber, string passengerName, string seatClass, decimal price)>();
+    foreach (var bs in bookingSeats)
+    {
+        var seat = bs.FlightSeat?.Seat;
+        if (seat == null) continue;
+        // Get price based on seat class
+        decimal price = 0;
+        switch (seat.Class)
+        {
+            case SeatClass.Economy: price = flight.BasePriceEconomy; break;
+            case SeatClass.Business: price = flight.BasePriceBusiness; break;
+            case SeatClass.First: price = flight.BasePriceFirst; break;
+        }
+        subtotal += price;
+        seatLineItems.Add((
+            seatNumber: seat.SeatNumber ?? "N/A",
+            passengerName: bs.PassengerName ?? "Unknown",
+            seatClass: seat.Class.ToString(),
+            price: price
+        ));
+    }
+    decimal taxRate = 0.14m;
+    decimal taxAmount = subtotal * taxRate;
+    decimal feeAmount = 50m; // service fee per booking
+    decimal discountAmount = Model.DiscountAmount;
+    decimal totalAmount = subtotal + taxAmount + feeAmount - discountAmount;
+}
+    @section Styles {
+<style>
+          
+        .card-dashboard { background: #fff; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); border: none; padding: 30px; margin-bottom: 30px; }
+        .primary-btn { background: #f8b600; border: none; padding: 12px 35px; font-weight: 600; border-radius: 30px; color: #222; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; cursor: pointer; }
+        .primary-btn:hover { background: #e0a800; color: #111; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(248,182,0,0.3); }
+        .outline-btn { background: transparent; border: 2px solid #f8b600; padding: 10px 28px; font-weight: 600; border-radius: 30px; color: #f8b600; display: inline-block; text-decoration: none; }
+        .outline-btn:hover { background: #f8b600; color: #222; }
+        .flight-summary { background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 25px; }
+        .flight-summary .info { display: flex; flex-wrap: wrap; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #e9ecef; }
+        .flight-summary .info:last-child { border-bottom: none; }
+        .seat-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+        .seat-badge-window { background: #00BFFF; color: #fff; }
+        .seat-badge-aisle { background: #ffc107; color: #222; }
+        .seat-badge-exit { background: #dc3545; color: #fff; }
+        .seat-badge-standard { background: #28a745; color: #fff; }
+        .passenger-card { background: #f8f9fa; border-radius: 8px; padding: 12px 15px; margin-bottom: 10px; }
+        .total-amount { font-size: 2rem; font-weight: 700; color: #1e2756; }
+        .total-label { font-size: 0.9rem; color: #666; }
+        .checkout-box { border-top: 2px solid #f8b600; padding-top: 25px; margin-top: 25px; }
+        .price-line { display: flex; justify-content: space-between; padding: 4px 0; }
+        .price-line.total { font-weight: 700; font-size: 1.2rem; border-top: 2px solid #f8b600; padding-top: 10px; margin-top: 5px; }
+        .seat-price-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #f0f0f0; }
+        @@media (max-width: 576px) {
+            .card-dashboard { padding: 20px; }
+        }
+</style>
+}
+<!-- Banner -->
+<section class="about-banner relative">
+    <div class="overlay-bg"></div>
+    <div class="container">
+        <div class="row d-flex align-items-center justify-content-center">
+            <div class="about-content col-lg-12">
+                <h1 class="text-white">Booking Confirmation</h1>
+                <p class="text-white link-nav">
+                    <a href="/">Home</a>
+                    <span class="lnr lnr-arrow-right"></span>
+                    <a href="/flight/search">Flights</a>
+                    <span class="lnr lnr-arrow-right"></span>
+                    <label>Checkout</label>
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- Main Content -->
+<section class="section-gap">
+    <div class="container">
+        <div class="row">
+            <!-- Left: Flight & Passenger Details -->
+            <div class="col-lg-8">
+                <!-- Flight Summary -->
+                <div class="card-dashboard">
+                    <h4 class="mb-3"><i class="fas fa-plane"></i> Flight Details</h4>
+                    <div class="flight-summary">
+                        <div class="info"><span><strong>Booking Reference:</strong></span> <span>@Model.BookingRef</span></div>
+                        <div class="info"><span><strong>Flight Number:</strong></span> <span>@flight?.FlightNumber</span></div>
+                        <div class="info"><span><strong>Date:</strong></span> <span>@flight?.DepartureUtc.ToString("dd MMM yyyy")</span></div>
+                        <div class="info"><span><strong>Origin:</strong></span> <span>@flight?.OriginAirport?.Name (@flight?.OriginAirport?.IataCode)</span></div>
+                        <div class="info"><span><strong>Destination:</strong></span> <span>@flight?.DestinationAirport?.Name (@flight?.DestinationAirport?.IataCode)</span></div>
+                        <div class="info"><span><strong>Departure:</strong></span> <span>@flight?.DepartureUtc.ToString("HH:mm")</span></div>
+                        <div class="info"><span><strong>Arrival:</strong></span> <span>@flight?.ArrivalUtc.ToString("HH:mm")</span></div>
+                        <div class="info"><span><strong>Aircraft:</strong></span> <span>@flight?.Aircraft?.Model</span></div>
+                    </div>
+                </div>
+                <!-- Passenger Details & Seats -->
+                <div class="card-dashboard">
+                    <h4 class="mb-3"><i class="fas fa-users"></i> Passengers & Seats</h4>
+                    @if (seatLineItems.Any())
+                    {
+                        foreach (var item in seatLineItems)
+                        {
+                            <div class="passenger-card d-flex flex-wrap justify-content-between align-items-center">
+                                <div>
+                                    <strong>@item.passengerName</strong>
+                                    <span class="text-muted ml-2">Seat @item.seatNumber</span>
+                                </div>
+                                <div>
+                                    <span class="badge badge-secondary mr-2">@item.seatClass</span>
+                                    <span class="badge badge-light mr-2">$@item.price.ToString("F2")</span>
+                                    @{
+                                        // Determine seat type for badge
+                                        var seat = bookingSeats.FirstOrDefault(bs => bs.FlightSeat?.Seat?.SeatNumber == item.seatNumber)?.FlightSeat?.Seat;
+                                        string seatType = "Standard";
+                                        string badgeClass = "seat-badge-standard";
+                                        if (seat != null)
+                                        {
+                                            if (seat.IsWindow) { seatType = "Window"; badgeClass = "seat-badge-window"; }
+                                            else if (seat.IsAisle) { seatType = "Aisle"; badgeClass = "seat-badge-aisle"; }
+                                            else if (seat.IsExitRow) { seatType = "Exit Row"; badgeClass = "seat-badge-exit"; }
+                                        }
+                                    }
+                                    <span class="seat-badge @badgeClass">@seatType</span>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-muted">No passenger details available.</p>
+                    }
+                </div>
+            </div>
+            <!-- Right: Summary & Checkout -->
+            <div class="col-lg-4">
+                <div class="card-dashboard">
+                    <h4 class="mb-3"><i class="fas fa-receipt"></i> Booking Summary</h4>
+                    <div class="flight-summary">
+                        <!-- Seat price breakdown -->
+                        <div class="price-line" style="font-weight: 600; border-bottom: 1px solid #ddd; padding-bottom: 6px;">
+                            <span>Seat</span>
+                            <span>Price</span>
+                        </div>
+                        @foreach (var item in seatLineItems)
+                        {
+                            <div class="price-line">
+                                <span>@item.seatNumber (@item.seatClass)</span>
+                                <span>$@item.price.ToString("F2")</span>
+                            </div>
+                        }
+                        <div class="price-line" style="border-top: 1px solid #ddd; margin-top: 8px; padding-top: 8px;">
+                            <span><strong>Subtotal</strong></span>
+                            <span><strong>$@subtotal.ToString("F2")</strong></span>
+                        </div>
+                        <div class="price-line">
+                            <span>Tax (14%)</span>
+                            <span>$@taxAmount.ToString("F2")</span>
+                        </div>
+                        <div class="price-line">
+                            <span>Service Fee</span>
+                            <span>$@feeAmount.ToString("F2")</span>
+                        </div>
+                        @if (discountAmount > 0)
+                        {
+                            <div class="price-line">
+                                <span>Discount</span>
+                                <span>-$@discountAmount.ToString("F2")</span>
+                            </div>
+                        }
+                        <div class="price-line total">
+                            <span>Total</span>
+                            <span>$@totalAmount.ToString("F2")</span>
+                        </div>
+                    </div>
+                    <div class="checkout-box text-center">
+                        <p class="text-muted small">Please confirm to complete your booking.</p>
+                            <form asp-action="CreateCheckoutSession" asp-controller="Booking" asp-area="User" method="post">
+                                <input type="hidden" name="id" value="@Model.Id" />
+                                <button type="submit" class="btn btn-primary">ادفع الآن (@Model.TotalAmount.ToString("N2") $)</button>
+                            </form>
+                        <div class="mt-2">
+                            <a href="/flight/search" class="outline-btn btn-sm"><i class="fas fa-arrow-left"></i> Back</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<footer style="background:#1e2756; color:#aaa; padding:40px 0; margin-top:40px;">
+    <div class="container text-center">
+        <p>&copy; 2025 TravelAir. All rights reserved. | <a href="#" style="color:#f8b600;">Terms</a> | <a href="#" style="color:#f8b600;">Privacy</a></p>
+    </div>
+</footer>

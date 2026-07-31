@@ -1,0 +1,240 @@
+@model LoginVM
+<!-- start banner Area -->
+<section class="about-banner relative">
+    <div class="overlay overlay-bg"></div>
+    <div class="container">
+        <div class="row d-flex align-items-center justify-content-center">
+            <div class="about-content col-lg-12">
+                <h1 class="text-white">
+                    Sign In
+                </h1>
+                <p class="text-white link-nav">
+                    <a href="/">Home</a>
+                    <span class="lnr lnr-arrow-right"></span>
+                    <a href="/Identity/Account/Login"> Sign In</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- End banner Area -->
+<!-- Start Login Area -->
+<section class="section-gap">
+    <div class="container">
+        <div class="row d-flex justify-content-center">
+            <div class="menu-content pb-40 col-lg-8">
+                <div class="title text-center">
+                    <h1 class="mb-10">Welcome Back</h1>
+                    <p>Sign in to access your account and continue your journey</p>
+                </div>
+            </div>
+        </div>
+        <div class="row justify-content-center">
+            <div class="col-lg-6">
+                <div class="login-form">
+                    <form asp-area="Identity" asp-controller="Account" asp-action="Login" method="post" class="form">
+                        @Html.AntiForgeryToken()
+                        <!-- REDIRECTION -->
+                        <input type="hidden" name="ReturnUrl" value="@ViewData["ReturnUrl"]" />
+                        <!-- Display validation errors -->
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" style="display: none;"></div>
+                        @if (!ViewData.ModelState.IsValid && ViewData.ModelState.ErrorCount > 0)
+                        {
+                            <div class="alert alert-danger">
+                                <ul class="mb-0">
+                                    @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                                    {
+                                        <li>@error.ErrorMessage</li>
+                                    }
+                                </ul>
+                            </div>
+                        }
+                        <div class="form-group">
+                            <label asp-for="UsernameOrEmail"></label>
+                            <input asp-for="UsernameOrEmail" class="form-control" placeholder="Enter your email or username" />
+                            <span asp-validation-for="UsernameOrEmail" class="text-danger small"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Password"></label>
+                            <input asp-for="Password" type="password" class="form-control" placeholder="Enter your password" />
+                            <span asp-validation-for="Password" class="text-danger small"></span>
+                        </div>
+                        <div class="form-group d-flex justify-content-between align-items-center">
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" class="custom-control-input" id="RememberMe" asp-for="RememberMe" />
+                                <label class="custom-control-label" for="RememberMe">Remember me</label>
+                            </div>
+                            <a asp-action="ForgotPassword" class="forgot-password">Forgot Password?</a>
+                        </div>
+                        <div class="form-group text-center mt-4">
+                            <button type="submit" class="primary-btn text-uppercase">Sign In</button>
+                        </div>
+                        <div class="text-center mt-3">
+                            <p class="mb-0">Don't have an account? <a asp-action="SignUp">Create an Account</a></p>
+                        </div>
+                        <div class="text-center mt-4">
+                            <p class="mb-3">Or sign in with</p>
+                            <div class="social-login">
+                                <a href="#" class="social-btn facebook">
+                                    <i class="fa fa-facebook"></i> Facebook
+                                </a>
+                                <a href="#" class="social-btn google">
+                                    <i class="fa fa-google"></i> Google
+                                </a>
+                                <a href="#" class="social-btn twitter">
+                                    <i class="fa fa-twitter"></i> Twitter
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- End Login Area -->
+@section Styles {
+<style>
+.login-form {
+        background: #fff;
+        padding: 40px;
+        border-radius: 10px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+        .login-form .form-group {
+            margin-bottom: 25px;
+        }
+        .login-form label {
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        .login-form .primary-btn {
+            padding: 12px 40px;
+            font-size: 14px;
+            width: 100%;
+            background: #f8b600;
+            border: none;
+            border-radius: 30px;
+            color: #222;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+            .login-form .primary-btn:hover {
+                background: #e0a800;
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(248,182,0,0.3);
+            }
+        .login-form .forgot-password {
+            color: #f8b600;
+            font-size: 14px;
+        }
+            .login-form .forgot-password:hover {
+                text-decoration: underline;
+            }
+        .login-form a {
+            color: #f8b600;
+        }
+            .login-form a:hover {
+                text-decoration: underline;
+            }
+    .custom-checkbox {
+        padding-left: 30px;
+    }
+    .custom-control-label {
+        cursor: pointer;
+        font-size: 14px;
+        color: #666;
+    }
+    .social-login {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+    .social-btn {
+        display: inline-flex;
+        align-items: center;
+        padding: 10px 20px;
+        border-radius: 5px;
+        color: #fff;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+        .social-btn i {
+            margin-right: 8px;
+            font-size: 16px;
+        }
+        .social-btn.facebook {
+            background: #3b5998;
+        }
+            .social-btn.facebook:hover {
+                background: #2d4373;
+                color: #fff;
+            }
+        .social-btn.google {
+            background: #db4437;
+        }
+            .social-btn.google:hover {
+                background: #b33a2f;
+                color: #fff;
+            }
+        .social-btn.twitter {
+            background: #1da1f2;
+        }
+            .social-btn.twitter:hover {
+                background: #0c85d0;
+                color: #fff;
+            }
+    .text-danger {
+        font-size: 12px;
+        margin-top: 5px;
+        display: block;
+    }
+    .alert-danger {
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+        .alert-danger ul {
+            margin-bottom: 0;
+        }
+    .form-control {
+        border-radius: 8px;
+        border: 1px solid #e0e0e0;
+        padding: 12px 15px;
+        font-family: 'Poppins', sans-serif;
+    }
+        .form-control:focus {
+            border-color: #f8b600;
+            box-shadow: 0 0 0 0.2rem rgba(248,182,0,0.25);
+            outline: none;
+        }
+</style>
+}
+@section Scripts {
+<script>
+    // Client-side validation to match LoginVM requirements
+    document.querySelector('form').addEventListener('submit', function(e) {
+        var usernameOrEmail = document.getElementById('UsernameOrEmail');
+        var password = document.getElementById('Password');
+        if (!usernameOrEmail.value.trim()) {
+            e.preventDefault();
+            alert('Please enter your username or email');
+            usernameOrEmail.focus();
+            return false;
+        }
+        if (!password.value) {
+            e.preventDefault();
+            alert('Please enter your password');
+            password.focus();
+            return false;
+        }
+        return true;
+    });
+    // Auto-focus on first field
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('UsernameOrEmail')?.focus();
+    });
+</script>
+}

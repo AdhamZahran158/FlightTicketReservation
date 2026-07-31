@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+    @using Microsoft.AspNetCore.Identity
+@inject SignInManager<Tenant> SignInManager
+@inject UserManager<Tenant> UserManager
+<head>
+    <!-- Meta -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="keywords" content="">
+    <meta name="author" content="colorlib">
+
+    <!-- Title -->
+    <title>Zahrawy</title>
+
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="~/img/fav.png">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css?family=Poppins:100,200,300,400,500,600,700" rel="stylesheet">
+
+    <!-- CSS FILES (ORDER MATTERS) -->
+    <link rel="stylesheet" href="~/css/linearicons.css">
+    <link rel="stylesheet" href="~/css/font-awesome.min.css">
+    <!-- FontAwesome 5 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="~/css/bootstrap.css">
+    <link rel="stylesheet" href="~/css/magnific-popup.css">
+    <link rel="stylesheet" href="~/css/jquery-ui.css">
+    <link rel="stylesheet" href="~/css/nice-select.css">
+    <link rel="stylesheet" href="~/css/animate.min.css">
+    <link rel="stylesheet" href="~/css/owl.carousel.css">
+    <link rel="stylesheet" href="~/css/main.css">
+
+    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <!-- Toastr CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+
+    <!-- Common Shared Styles for all views -->
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #f9f9ff;
+            color: #222;
+        }
+
+        .overlay {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            bottom: 0;
+        }
+
+        .overlay-bg {
+            background: linear-gradient(90deg, #1e2756 0%, #2d3a6e 100%);
+            opacity: 0.85;
+        }
+
+        .about-banner {
+            background: url('https://images.pexels.com/photos/62623/wing-plane-flying-airplane-62623.jpeg?auto=compress&cs=tinysrgb&w=1600') center/cover no-repeat;
+            position: relative;
+            padding: 80px 0;
+        }
+
+        .about-content h1 {
+            font-size: 48px;
+            font-weight: 700;
+        }
+
+        .link-nav a, .link-nav span {
+            color: #fff;
+            text-decoration: none;
+            font-weight: 500;
+            background: transparent;
+        }
+
+            .link-nav a:hover {
+                color: #f8b600;
+            }
+
+        .section-gap {
+            padding: 60px 0;
+        }
+
+        .title h1 {
+            font-size: 36px;
+            font-weight: 700;
+            color: #222;
+        }
+
+        .title p {
+            color: #777;
+        }
+
+        @@media (max-width: 768px) {
+            .about-banner {
+                padding: 60px 0;
+            }
+
+            .title h1 {
+                font-size: 28px;
+            }
+
+            .section-gap {
+                padding: 40px 0;
+            }
+        }
+    </style>
+
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+
+    <!-- ══════════════════════════════════════════════════════
+         HEADER
+    ═══════════════════════════════════════════════════════ -->
+    <header id="header">
+
+        <!-- dark top strip -->
+        <div class="header-top">
+            <div class="container">
+                <div class="row align-items-center">
+                    <div class="col-lg-6 col-sm-6 col-6 header-top-left">
+                        <ul>
+                            <li><a href="#">Admin Panel</a></li>
+                            <li><a href="#">New Booking</a></li>
+                        </ul>
+                    </div>
+                    <div class="col-lg-6 col-sm-6 col-6 header-top-right">
+                        <div class="header-social">
+                            <a href="#"><i class="fa fa-facebook"></i></a>
+                            <a href="#"><i class="fa fa-twitter"></i></a>
+                            <a href="#"><i class="fa fa-dribbble"></i></a>
+                            <a href="#"><i class="fa fa-behance"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- main nav (same .container .main-menu pattern) -->
+        <div class="container main-menu">
+            <div class="row align-items-center justify-content-between d-flex">
+                <div id="logo">
+                    <!-- In MVC: <a asp-controller="Home" asp-action="Index"><img src="~/~/img/logo.png"/></a> -->
+                    <img src="~/img/logo.png">
+                </div>
+                <nav id="nav-menu-container">
+                    <ul class="nav-menu">
+                        <!-- Dashboard -->
+                        <li class="@(ViewData["ActivePage"]?.ToString() == "Dashboard" ? "active" : "")">
+                            <a href="@Url.Action("Index", "Home", new { area = "Admin" })">Dashboard</a>
+                        </li>
+
+                        <!-- Flights Dropdown -->
+                        <li class="menu-has-children @(ViewData["ActivePage"]?.ToString() == "Flights" ? "active" : "")">
+                            <a href="#">Flights</a>
+                            <ul>
+                                <li><a href="@Url.Action("Index", "Flight", new { area = "Admin" })">All Flights</a></li>
+                                <li><a href="@Url.Action("AircraftIndex", "Aircraft", new { area = "Admin" })">Aircraft</a></li>
+                                <li><a href="@Url.Action("Index", "Airport", new { area = "Admin" })">Airports</a></li>
+                                @* Future: Flight Seats *@
+                                <!-- <li><a href="#">Flight Seats</a></li> -->
+                            </ul>
+                        </li>
+
+                        <!-- Bookings Dropdown -->
+                        <li class="menu-has-children @(ViewData["ActivePage"]?.ToString() == "Bookings" ? "active" : "")">
+                            <a href="#">Bookings</a>
+                            <ul>
+                                <li><a href="@Url.Action("Index", "Booking", new { area = "Admin" })">All Bookings</a></li>
+                                @* Future: Booking Seats, Booking Logs *@
+                                <!-- <li><a href="#">Booking Seats</a></li> -->
+                                <!-- <li><a href="#">Booking Logs</a></li> -->
+                            </ul>
+                        </li>
+
+                        <!-- Pricing Dropdown -->
+                        <li class="menu-has-children @(ViewData["ActivePage"]?.ToString() == "Pricing" ? "active" : "")">
+                            <a href="#">Pricing</a>
+                            <ul>
+                                <li><a href="@Url.Action("Index", "Discount", new { area = "Admin" })">Discounts</a></li>
+                                @* Future: Offers, Flight Offers, Tax & Fees *@
+                                <!-- <li><a href="#">Offers</a></li> -->
+                                <!-- <li><a href="#">Flight Offers</a></li> -->
+                                <!-- <li><a href="#">Tax &amp; Fees</a></li> -->
+                            </ul>
+                        </li>
+
+                        @* Finance – no controllers yet, keep commented *@
+                        @* <li class="menu-has-children">
+            <a href="#">Finance</a>
+            <ul>
+                <li><a href="#">Payments</a></li>
+                <li><a href="#">Policies</a></li>
+            </ul>
+        </li> *@
+
+                        @* System – no controllers yet *@
+                        @* <li class="menu-has-children">
+            <a href="#">System</a>
+            <ul>
+                <li><a href="#">Tenants</a></li>
+                <li><a href="#">Notifications</a></li>
+            </ul>
+        </li> *@
+
+                        <!-- Logout (POST) -->
+                        @if (SignInManager.IsSignedIn(User))
+                        {
+                            var adminUser = await UserManager.GetUserAsync(User);
+                            <li>
+                                <form method="post" action="@Url.Action("Logout", "Account", new { area = "Identity" })" style="display:inline;">
+                                    @Html.AntiForgeryToken()
+                                    <a href="#" onclick="document.getElementById('adminLogoutForm').submit(); return false;" style="cursor:pointer;">
+                                        Logout @(adminUser != null ? "(" + adminUser.UserName + ")" : "")
+                                    </a>
+                                </form>
+                                <form id="adminLogoutForm" method="post" action="@Url.Action("Logout", "Account", new { area = "Identity" })" style="display:none;">
+                                    @Html.AntiForgeryToken()
+                                </form>
+                            </li>
+                        }
+                    </ul>
+                </nav>
+            </div>
+        </div>
+
+    </header><!-- #header -->
+
+    <main role="main" class="pb-3">
+        @RenderBody()
+    </main>
+
+    <!-- ══════════════════════════════════════════════════════
+         FOOTER
+    ═══════════════════════════════════════════════════════ -->
+    <footer class="footer-area section-gap">
+        <div class="container">
+            <div class="row">
+
+                <!-- About -->
+                <div class="col-lg-3 col-md-6 col-sm-6">
+                    <div class="single-footer-widget">
+                        <h6>About SkyDesk</h6>
+                        <p>
+                            Zahrawy Airfly is a multi-tenant flight booking management platform. Manage flights, bookings, pricing, payments, and policies from one unified admin dashboard.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Navigation Links — same two-column layout as template -->
+                <div class="col-lg-3 col-md-6 col-sm-6">
+                    <div class="single-footer-widget">
+                        <h6>Navigation Links</h6>
+                        <div class="row">
+                            <div class="col">
+                                <ul>
+                                    <li><a href="#">Dashboard</a></li>
+                                    <li><a href="#">Flights</a></li>
+                                    <li><a href="#">Bookings</a></li>
+                                    <li><a href="#">Aircraft</a></li>
+                                </ul>
+                            </div>
+                            <div class="col">
+                                <ul>
+                                    <li><a href="#">Payments</a></li>
+                                    <li><a href="#">Offers</a></li>
+                                    <li><a href="#">Policies</a></li>
+                                    <li><a href="#">Contact</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Newsletter -->
+                <div class="col-lg-3 col-md-6 col-sm-6">
+                    <div class="single-footer-widget">
+                        <h6>Newsletter</h6>
+                        <p>Subscribe for the latest route launches, system updates, and offer alerts.</p>
+                        <div id="mc_embed_signup">
+                            <form target="_blank" action="#" method="get" class="subscription">
+                                <div class="input-group d-flex flex-row">
+                                    <input name="EMAIL" placeholder="Email Address" onfocus="this.placeholder=''" onblur="this.placeholder='Email Address'" required type="email">
+                                    <button class="btn bb-btn"><span class="fa fa-location-arrow"></span></button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- InstaFeed -->
+                <div class="col-lg-3 col-md-6 col-sm-6">
+                    <div class="single-footer-widget mail-chimp">
+                        <h6 class="mb-20">InstaFeed</h6>
+                        <ul class="instafeed d-flex flex-wrap">
+                            <li><i class="fa fa-image"></i></li>
+                            <li><i class="fa fa-image"></i></li>
+                            <li><i class="fa fa-image"></i></li>
+                            <li><i class="fa fa-image"></i></li>
+                            <li><i class="fa fa-image"></i></li>
+                            <li><i class="fa fa-image"></i></li>
+                            <li><i class="fa fa-image"></i></li>
+                            <li><i class="fa fa-image"></i></li>
+                        </ul>
+                    </div>
+                </div>
+
+            </div><!-- /row -->
+            <!-- Footer bottom — same justify-content-between pattern -->
+            <div class="row footer-bottom d-flex justify-content-between align-items-center">
+                <p class="col-lg-8 col-sm-12 footer-text m-0">
+                    Copyright &copy;<script>document.write(new Date().getFullYear())</script>
+                    Zahrawy. All rights reserved | Built with
+                    <i class="fa fa-heart-o" aria-hidden="true"></i> on ASP.NET MVC &amp;
+                    <a href="https://colorlib.com" target="_blank">Colorlib</a>
+                </p>
+                <div class="col-lg-4 col-sm-12 footer-social text-right">
+                    <a href="#"><i class="fa fa-facebook"></i></a>
+                    <a href="#"><i class="fa fa-twitter"></i></a>
+                    <a href="#"><i class="fa fa-dribbble"></i></a>
+                    <a href="#"><i class="fa fa-behance"></i></a>
+                </div>
+            </div>
+
+        </div><!-- /container -->
+    </footer><!-- End footer -->
+    <!-- JS FILES (ORDER IS VERY IMPORTANT) -->
+
+    <script src="~/js/vendor/jquery-2.2.4.min.js"></script>
+    <script src="~/js/popper.min.js"></script>
+    <script src="~/js/vendor/bootstrap.min.js"></script>
+
+    <!-- Optional Google Maps (can remove if unused) -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_KEY"></script>
+
+    <script src="~/js/jquery-ui.js"></script>
+    <script src="~/js/easing.min.js"></script>
+    <script src="~/js/hoverIntent.js"></script>
+    <script src="~/js/superfish.min.js"></script>
+
+    <script src="~/js/jquery.ajaxchimp.min.js"></script>
+    <script src="~/js/jquery.magnific-popup.min.js"></script>
+    <script src="~/js/jquery.nice-select.min.js"></script>
+    <script src="~/js/owl.carousel.min.js"></script>
+
+    <script src="~/js/mail-script.js"></script>
+    <script src="~/js/main.js"></script>
+
+    <!-- Toastr JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Toastr Configuration and TempData Handler -->
+    <script>
+        // Toastr Configuration
+        toastr.options = {
+            "closeButton": true,
+            "debug": false,
+            "newestOnTop": false,
+            "progressBar": true,
+            "positionClass": "toast-top-right",
+            "preventDuplicates": false,
+            "onclick": null,
+            "showDuration": "300",
+            "hideDuration": "1000",
+            "timeOut": "5000",
+            "extendedTimeOut": "1000",
+            "showEasing": "swing",
+            "hideEasing": "linear",
+            "showMethod": "fadeIn",
+            "hideMethod": "fadeOut"
+        };
+
+        // Handle TempData messages from server
+        $(document).ready(function() {
+            var successMessage = '@TempData["success"]';
+            if (successMessage && successMessage !== '') toastr.success(successMessage);
+
+            var errorMessage = '@TempData["error"]';
+            if (errorMessage && errorMessage !== '') toastr.error(errorMessage);
+
+            var warningMessage = '@TempData["warning"]';
+            if (warningMessage && warningMessage !== '') toastr.warning(warningMessage);
+
+            var infoMessage = '@TempData["info"]';
+            if (infoMessage && infoMessage !== '') toastr.info(infoMessage);
+
+            var swalType = '@TempData["SwalType"]';
+            var swalTitle = '@TempData["SwalTitle"]';
+            var swalMessage = '@TempData["SwalMessage"]';
+
+            if (swalType && swalType !== '') {
+                Swal.fire({
+                    title: swalTitle || getSwalTitle(swalType),
+                    text: swalMessage,
+                    icon: swalType,
+                    confirmButtonColor: '#f8b600',
+                    confirmButtonText: 'OK'
+                });
+            }
+
+            function getSwalTitle(type) {
+                switch(type) {
+                    case 'success': return 'Success!';
+                    case 'error': return 'Error!';
+                    case 'warning': return 'Warning!';
+                    case 'info': return 'Information';
+                    default: return 'Notification';
+                }
+            }
+        });
+
+        // Global functions
+        window.showSuccess = function(message) { toastr.success(message); };
+        window.showError = function(message) { toastr.error(message); };
+        window.showWarning = function(message) { toastr.warning(message); };
+        window.showInfo = function(message) { toastr.info(message); };
+
+        window.showAlert = function(type, title, message) {
+            Swal.fire({ title: title, text: message, icon: type, confirmButtonColor: '#f8b600', confirmButtonText: 'OK' });
+        };
+
+        window.showConfirm = function(title, message, confirmCallback, cancelCallback) {
+            Swal.fire({
+                title: title || 'Are you sure?',
+                text: message,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#f8b600',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed && confirmCallback) confirmCallback();
+                else if (cancelCallback) cancelCallback();
+            });
+        };
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+
+</body>
+</html>

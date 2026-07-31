@@ -1,0 +1,923 @@
+================================================================================
+                       ZAHRAWY AIRFLY - ERD DOCUMENT
+          Entity-Relationship Diagram & Enhanced ERD (EERD)
+              Multi-Tenant SaaS Airline Booking Platform
+================================================================================
+                         Graduation Project - Team 6
+                              Date: 2026-03-11
+================================================================================
+
+
+================================================================================
+                        PART 1: ENTITY DEFINITIONS
+================================================================================
+
+
+================================================================================
+ENTITY 1: TENANT
+================================================================================
+Description: Represents an airline company registered on the SaaS platform.
+             Each tenant operates independently with isolated data.
+
++---------------------+-----------------+------+--------+-----------------------+
+|     Attribute       |    Data Type    | NULL | Key    | Description           |
++---------------------+-----------------+------+--------+-----------------------+
+| Id                  | UNIQUEIDENTIFIER| NO   | PK     | Primary key           |
+| CompanyName         | NVARCHAR(200)   | NO   |        | Airline company name  |
+| Subdomain           | NVARCHAR(100)   | NO   | UNIQUE | URL subdomain         |
+| LogoUrl             | NVARCHAR(500)   | YES  |        | Company logo URL      |
+| ContactEmail        | NVARCHAR(256)   | NO   |        | Company contact email |
+| Currency            | NVARCHAR(10)    | NO   |        | Default currency code |
+| IsActive            | BIT             | NO   |        | Active/disabled flag  |
+| CreatedAt           | DATETIME2       | NO   |        | Record creation date  |
+| UpdatedAt           | DATETIME2       | YES  |        | Last update date      |
+| IsDeleted           | BIT             | NO   |        | Soft delete flag      |
++---------------------+-----------------+------+--------+-----------------------+
+
+Relationships:
+  - TENANT (1) ----< (M) USER           : A tenant has many users
+  - TENANT (1) ----< (M) AIRCRAFT       : A tenant owns many aircraft
+  - TENANT (1) ----< (M) FLIGHT         : A tenant operates many flights
+  - TENANT (1) ----< (M) POLICY         : A tenant defines many policies
+  - TENANT (1) ----< (M) TAX_FEE        : A tenant configures many taxes/fees
+  - TENANT (1) ----< (M) OFFER          : A tenant creates many offers
+  - TENANT (1) ----< (M) DISCOUNT       : A tenant creates many discount codes
+  - TENANT (1) ----< (M) NOTIFICATION   : A tenant sends many notifications
+
+
+================================================================================
+ENTITY 2: AIRPORT
+================================================================================
+Description: Represents a global airport. Shared across all tenants. Contains
+             IATA/ICAO codes, location data, and timezone information.
+
++---------------------+-----------------+------+--------+-----------------------+
+|     Attribute       |    Data Type    | NULL | Key    | Description           |
++---------------------+-----------------+------+--------+-----------------------+
+| Id                  | UNIQUEIDENTIFIER| NO   | PK     | Primary key           |
+| IataCode            | NVARCHAR(3)     | NO   | UNIQUE | 3-letter IATA code    |
+| IcaoCode            | NVARCHAR(4)     | YES  | UNIQUE | 4-letter ICAO code    |
+| Name                | NVARCHAR(300)   | NO   |        | Full airport name     |
+| City                | NVARCHAR(200)   | NO   |        | City name             |
+| Country             | NVARCHAR(200)   | NO   |        | Country name          |
+| CountryCode         | NVARCHAR(3)     | NO   |        | ISO country code      |
+| Timezone            | NVARCHAR(100)   | NO   |        | IANA timezone ID      |
+| Latitude            | DECIMAL(9,6)    | YES  |        | Geographic latitude   |
+| Longitude           | DECIMAL(9,6)    | YES  |        | Geographic longitude  |
+| IsActive            | BIT             | NO   |        | Active flag           |
+| CreatedAt           | DATETIME2       | NO   |        | Record creation date  |
+| UpdatedAt           | DATETIME2       | YES  |        | Last update date      |
+| IsDeleted           | BIT             | NO   |        | Soft delete flag      |
++---------------------+-----------------+------+--------+-----------------------+
+
+Relationships:
+  - AIRPORT (1) ----< (M) FLIGHT (as Origin)       : Airport is origin of many flights
+  - AIRPORT (1) ----< (M) FLIGHT (as Destination)   : Airport is destination of many flights
+
+
+================================================================================
+ENTITY 3: USER
+================================================================================
+Description: A system user. Can be SuperAdmin, AirlineAdmin, Staff, or 
+             Passenger. Always belongs to a tenant (except SuperAdmin).
+
++---------------------+-----------------+------+--------+-----------------------+
+|     Attribute       |    Data Type    | NULL | Key    | Description           |
++---------------------+-----------------+------+--------+-----------------------+
+| Id                  | UNIQUEIDENTIFIER| NO   | PK     | Primary key           |
+| TenantId            | UNIQUEIDENTIFIER| YES  | FK     | Ref: Tenant.Id        |
+| Email               | NVARCHAR(256)   | NO   | UNIQUE | User email address    |
+| PasswordHash        | NVARCHAR(500)   | NO   |        | BCrypt hashed password|
+| FullName            | NVARCHAR(200)   | NO   |        | Full name             |
+| Phone               | NVARCHAR(20)    | YES  |        | Phone number          |
+| PassportNumber      | NVARCHAR(50)    | YES  |        | Passport number       |
+| Role                | NVARCHAR(50)    | NO   |        | User role (enum)      |
+| IsActive            | BIT             | NO   |        | Active flag           |
+| EmailConfirmed      | BIT             | NO   |        | Email verified flag   |
+| CreatedAt           | DATETIME2       | NO   |        | Record creation date  |
+| UpdatedAt           | DATETIME2       | YES  |        | Last update date      |
+| IsDeleted           | BIT             | NO   |        | Soft delete flag      |
++---------------------+-----------------+------+--------+-----------------------+
+
+Relationships:
+  - USER (M) >---- (1) TENANT          : User belongs to a tenant
+  - USER (1) ----< (M) BOOKING         : User makes many bookings
+  - USER (1) ----< (M) NOTIFICATION    : User receives many notifications
+
+
+================================================================================
+ENTITY 4: AIRCRAFT
+================================================================================
+Description: An airplane in an airline's fleet. Contains seat configuration
+             and layout information used to generate seat maps.
+
++---------------------+-----------------+------+--------+-----------------------+
+|     Attribute       |    Data Type    | NULL | Key    | Description           |
++---------------------+-----------------+------+--------+-----------------------+
+| Id                  | UNIQUEIDENTIFIER| NO   | PK     | Primary key           |
+| TenantId            | UNIQUEIDENTIFIER| NO   | FK     | Ref: Tenant.Id        |
+| Model               | NVARCHAR(100)   | NO   |        | Aircraft model name   |
+| RegistrationCode    | NVARCHAR(20)    | NO   | UNIQUE | Registration code     |
+| TotalSeats          | INT             | NO   |        | Total seat count      |
+| Rows                | INT             | NO   |        | Number of rows        |
+| SeatsPerRow         | INT             | NO   |        | Seats per row         |
+| SeatLayoutJson      | NVARCHAR(MAX)   | YES  |        | JSON seat layout      |
+| IsActive            | BIT             | NO   |        | Active flag           |
+| CreatedAt           | DATETIME2       | NO   |        | Record creation date  |
+| UpdatedAt           | DATETIME2       | YES  |        | Last update date      |
+| IsDeleted           | BIT             | NO   |        | Soft delete flag      |
++---------------------+-----------------+------+--------+-----------------------+
+
+Relationships:
+  - AIRCRAFT (M) >---- (1) TENANT      : Aircraft belongs to a tenant
+  - AIRCRAFT (1) ----< (M) SEAT        : Aircraft contains many seats
+  - AIRCRAFT (1) ----< (M) FLIGHT      : Aircraft assigned to many flights
+
+
+================================================================================
+ENTITY 5: SEAT
+================================================================================
+Description: An individual seat within an aircraft. Defines the physical 
+             position, class, and characteristics of the seat.
+
++---------------------+-----------------+------+--------+-----------------------+
+|     Attribute       |    Data Type    | NULL | Key    | Description           |
++---------------------+-----------------+------+--------+-----------------------+
+| Id                  | UNIQUEIDENTIFIER| NO   | PK     | Primary key           |
+| AircraftId          | UNIQUEIDENTIFIER| NO   | FK     | Ref: Aircraft.Id      |
+| SeatNumber          | NVARCHAR(10)    | NO   |        | e.g., "12A", "3F"    |
+| Row                 | INT             | NO   |        | Row number            |
+| Column              | NVARCHAR(3)     | NO   |        | Column letter (A-K)   |
+| Class               | NVARCHAR(20)    | NO   |        | Economy/Business/First|
+| Zone                | NVARCHAR(20)    | YES  |        | Boarding zone         |
+| IsExitRow           | BIT             | NO   |        | Near emergency exit   |
+| IsWindow            | BIT             | NO   |        | Window seat flag      |
+| IsAisle             | BIT             | NO   |        | Aisle seat flag       |
+| CreatedAt           | DATETIME2       | NO   |        | Record creation date  |
+| UpdatedAt           | DATETIME2       | YES  |        | Last update date      |
+| IsDeleted           | BIT             | NO   |        | Soft delete flag      |
++---------------------+-----------------+------+--------+-----------------------+
+
+Relationships:
+  - SEAT (M) >---- (1) AIRCRAFT        : Seat belongs to an aircraft
+  - SEAT (1) ----< (M) FLIGHT_SEAT     : Seat maps to many flight seats
+
+
+================================================================================
+ENTITY 6: FLIGHT
+================================================================================
+Description: A scheduled flight operated by an airline. Links to aircraft,
+             origin airport, and destination airport. Contains pricing and 
+             baggage configuration.
+
++---------------------+-----------------+------+--------+-----------------------+
+|     Attribute       |    Data Type    | NULL | Key    | Description           |
++---------------------+-----------------+------+--------+-----------------------+
+| Id                  | UNIQUEIDENTIFIER| NO   | PK     | Primary key           |
+| TenantId            | UNIQUEIDENTIFIER| NO   | FK     | Ref: Tenant.Id        |
+| AircraftId          | UNIQUEIDENTIFIER| NO   | FK     | Ref: Aircraft.Id      |
+| OriginAirportId     | UNIQUEIDENTIFIER| NO   | FK     | Ref: Airport.Id       |
+| DestinationAirportId| UNIQUEIDENTIFIER| NO   | FK     | Ref: Airport.Id       |
+| FlightNumber        | NVARCHAR(20)    | NO   |        | e.g., "ZA-1042"      |
+| DepartureUtc        | DATETIME2       | NO   |        | Departure time (UTC)  |
+| ArrivalUtc          | DATETIME2       | NO   |        | Arrival time (UTC)    |
+| Gate                | NVARCHAR(10)    | YES  |        | Departure gate        |
+| Terminal            | NVARCHAR(10)    | YES  |        | Terminal number       |
+| Status              | NVARCHAR(20)    | NO   |        | Flight status (enum)  |
+| BasePriceEconomy    | DECIMAL(18,2)   | NO   |        | Economy class price   |
+| BasePriceBusiness   | DECIMAL(18,2)   | NO   |        | Business class price  |
+| BasePriceFirst      | DECIMAL(18,2)   | NO   |        | First class price     |
+| MaxBaggageKg        | INT             | NO   |        | Max baggage allowed   |
+| FreeBaggageKg       | INT             | NO   |        | Free baggage included |
+| ExtraBaggagePerKg   | DECIMAL(18,2)   | NO   |        | Extra baggage rate/kg |
+| CreatedAt           | DATETIME2       | NO   |        | Record creation date  |
+| UpdatedAt           | DATETIME2       | YES  |        | Last update date      |
+| IsDeleted           | BIT             | NO   |        | Soft delete flag      |
++---------------------+-----------------+------+--------+-----------------------+
+
+Relationships:
+  - FLIGHT (M) >---- (1) TENANT                     : Flight belongs to tenant
+  - FLIGHT (M) >---- (1) AIRCRAFT                   : Flight uses an aircraft
+  - FLIGHT (M) >---- (1) AIRPORT (as Origin)         : Flight departs from
+  - FLIGHT (M) >---- (1) AIRPORT (as Destination)    : Flight arrives at
+  - FLIGHT (1) ----< (M) FLIGHT_SEAT                : Flight has many seats
+  - FLIGHT (1) ----< (M) BOOKING                    : Flight has many bookings
+  - FLIGHT (1) ----< (M) FLIGHT_OFFER               : Flight has many offers
+
+
+================================================================================
+ENTITY 7: OFFER
+================================================================================
+Description: A time-limited promotional discount that an airline creates and 
+             attaches to specific flights. Applied automatically when active.
+
++---------------------+-----------------+------+--------+-----------------------+
+|     Attribute       |    Data Type    | NULL | Key    | Description           |
++---------------------+-----------------+------+--------+-----------------------+
+| Id                  | UNIQUEIDENTIFIER| NO   | PK     | Primary key           |
+| TenantId            | UNIQUEIDENTIFIER| NO   | FK     | Ref: Tenant.Id        |
+| Name                | NVARCHAR(200)   | NO   |        | Offer name/title      |
+| Description         | NVARCHAR(1000)  | YES  |        | Offer description     |
+| DiscountValue       | DECIMAL(18,2)   | NO   |        | Discount amount       |
+| IsPercentage        | BIT             | NO   |        | True=%, False=fixed   |
+| StartDate           | DATETIME2       | NO   |        | Offer start date      |
+| EndDate             | DATETIME2       | NO   |        | Offer end date        |
+| MaxUsageCount       | INT             | NO   |        | Max times usable      |
+| CurrentUsageCount   | INT             | NO   |        | Current usage count   |
+| IsActive            | BIT             | NO   |        | Active flag           |
+| CreatedAt           | DATETIME2       | NO   |        | Record creation date  |
+| UpdatedAt           | DATETIME2       | YES  |        | Last update date      |
+| IsDeleted           | BIT             | NO   |        | Soft delete flag      |
++---------------------+-----------------+------+--------+-----------------------+
+
+Relationships:
+  - OFFER (M) >---- (1) TENANT                     : Offer belongs to tenant
+  - OFFER (1) ----< (M) FLIGHT_OFFER               : Offer applied to flights
+
+
+================================================================================
+ENTITY 8: FLIGHT_OFFER (Junction Table)
+================================================================================
+Description: Links offers to flights in a many-to-many relationship.
+             A flight can have multiple offers, and an offer can apply to
+             multiple flights.
+
++---------------------+-----------------+------+--------+-----------------------+
+|     Attribute       |    Data Type    | NULL | Key    | Description           |
++---------------------+-----------------+------+--------+-----------------------+
+| Id                  | UNIQUEIDENTIFIER| NO   | PK     | Primary key           |
+| FlightId            | UNIQUEIDENTIFIER| NO   | FK     | Ref: Flight.Id        |
+| OfferId             | UNIQUEIDENTIFIER| NO   | FK     | Ref: Offer.Id         |
+| CreatedAt           | DATETIME2       | NO   |        | Record creation date  |
++---------------------+-----------------+------+--------+-----------------------+
+
+Relationships:
+  - FLIGHT_OFFER (M) >---- (1) FLIGHT  : Belongs to a flight
+  - FLIGHT_OFFER (M) >---- (1) OFFER   : Belongs to an offer
+
+Constraints:
+  - UNIQUE (FlightId, OfferId) -- No duplicate offer on same flight
+
+
+================================================================================
+ENTITY 9: DISCOUNT
+================================================================================
+Description: A coupon/promo code that passengers can enter at checkout.
+             Configured by the airline with usage limits and validity period.
+
++---------------------+-----------------+------+--------+-----------------------+
+|     Attribute       |    Data Type    | NULL | Key    | Description           |
++---------------------+-----------------+------+--------+-----------------------+
+| Id                  | UNIQUEIDENTIFIER| NO   | PK     | Primary key           |
+| TenantId            | UNIQUEIDENTIFIER| NO   | FK     | Ref: Tenant.Id        |
+| Code                | NVARCHAR(50)    | NO   | UNIQUE | Promo code string     |
+| Description         | NVARCHAR(500)   | YES  |        | Description           |
+| Value               | DECIMAL(18,2)   | NO   |        | Discount value        |
+| IsPercentage        | BIT             | NO   |        | True=%, False=fixed   |
+| MinBookingAmount    | DECIMAL(18,2)   | NO   |        | Min booking to apply  |
+| ValidFrom           | DATETIME2       | NO   |        | Valid from date       |
+| ValidUntil          | DATETIME2       | NO   |        | Valid until date      |
+| MaxUses             | INT             | NO   |        | Max total uses        |
+| TimesUsed           | INT             | NO   |        | Current usage count   |
+| IsActive            | BIT             | NO   |        | Active flag           |
+| CreatedAt           | DATETIME2       | NO   |        | Record creation date  |
+| UpdatedAt           | DATETIME2       | YES  |        | Last update date      |
+| IsDeleted           | BIT             | NO   |        | Soft delete flag      |
++---------------------+-----------------+------+--------+-----------------------+
+
+Relationships:
+  - DISCOUNT (M) >---- (1) TENANT      : Discount belongs to tenant
+  - DISCOUNT (1) ----< (M) BOOKING     : Discount used in many bookings
+
+
+================================================================================
+ENTITY 10: FLIGHT_SEAT
+================================================================================
+Description: Represents a specific seat on a specific flight. Created when
+             a flight is scheduled. Tracks real-time booking status.
+
++---------------------+-----------------+------+--------+-----------------------+
+|     Attribute       |    Data Type    | NULL | Key    | Description           |
++---------------------+-----------------+------+--------+-----------------------+
+| Id                  | UNIQUEIDENTIFIER| NO   | PK     | Primary key           |
+| FlightId            | UNIQUEIDENTIFIER| NO   | FK     | Ref: Flight.Id        |
+| SeatId              | UNIQUEIDENTIFIER| NO   | FK     | Ref: Seat.Id          |
+| Status              | NVARCHAR(20)    | NO   |        | Available/Booked/etc. |
+| PriceOverride       | DECIMAL(18,2)   | YES  |        | Custom price for seat |
+| LockedByUserId      | UNIQUEIDENTIFIER| YES  | FK     | Ref: User.Id (temp)   |
+| LockedUntil         | DATETIME2       | YES  |        | Lock expiry time      |
+| CreatedAt           | DATETIME2       | NO   |        | Record creation date  |
+| UpdatedAt           | DATETIME2       | YES  |        | Last update date      |
+| IsDeleted           | BIT             | NO   |        | Soft delete flag      |
++---------------------+-----------------+------+--------+-----------------------+
+
+Relationships:
+  - FLIGHT_SEAT (M) >---- (1) FLIGHT   : Belongs to a flight
+  - FLIGHT_SEAT (M) >---- (1) SEAT     : Maps to an aircraft seat
+  - FLIGHT_SEAT (1) ----< (M) BOOKING_SEAT : Reserved by booking seats
+
+Constraints:
+  - UNIQUE (FlightId, SeatId) -- Each seat appears once per flight
+
+
+================================================================================
+ENTITY 11: BOOKING
+================================================================================
+Description: A reservation made by a passenger for a specific flight.
+             Contains pricing breakdown, status tracking, and references.
+
++---------------------+-----------------+------+--------+-----------------------+
+|     Attribute       |    Data Type    | NULL | Key    | Description           |
++---------------------+-----------------+------+--------+-----------------------+
+| Id                  | UNIQUEIDENTIFIER| NO   | PK     | Primary key           |
+| BookingRef          | NVARCHAR(20)    | NO   | UNIQUE | Human-readable ref    |
+| EncryptedRef        | NVARCHAR(500)   | NO   |        | AES-256 encrypted ref |
+| UserId              | UNIQUEIDENTIFIER| NO   | FK     | Ref: User.Id          |
+| FlightId            | UNIQUEIDENTIFIER| NO   | FK     | Ref: Flight.Id        |
+| TenantId            | UNIQUEIDENTIFIER| NO   | FK     | Ref: Tenant.Id        |
+| DiscountId          | UNIQUEIDENTIFIER| YES  | FK     | Ref: Discount.Id      |
+| Status              | NVARCHAR(20)    | NO   |        | Booking status (enum) |
+| SubTotal            | DECIMAL(18,2)   | NO   |        | Before discounts      |
+| DiscountAmount      | DECIMAL(18,2)   | NO   |        | Total discount amount |
+| TaxAmount           | DECIMAL(18,2)   | NO   |        | Total tax amount      |
+| FeeAmount           | DECIMAL(18,2)   | NO   |        | Total fee amount      |
+| TotalAmount         | DECIMAL(18,2)   | NO   |        | Final total to pay    |
+| BaggageKg           | INT             | NO   |        | Requested baggage kg  |
+| AgreedToTerms       | BIT             | NO   |        | Terms acceptance flag |
+| BookedAt            | DATETIME2       | NO   |        | Booking timestamp     |
+| ModifiedAt          | DATETIME2       | YES  |        | Last modification     |
+| CancelledAt         | DATETIME2       | YES  |        | Cancellation time     |
+| CancellationReason  | NVARCHAR(500)   | YES  |        | Reason for cancel     |
+| CreatedAt           | DATETIME2       | NO   |        | Record creation date  |
+| UpdatedAt           | DATETIME2       | YES  |        | Last update date      |
+| IsDeleted           | BIT             | NO   |        | Soft delete flag      |
++---------------------+-----------------+------+--------+-----------------------+
+
+Relationships:
+  - BOOKING (M) >---- (1) USER         : Made by a user
+  - BOOKING (M) >---- (1) FLIGHT       : For a specific flight
+  - BOOKING (M) >---- (1) TENANT       : Belongs to a tenant
+  - BOOKING (M) >---- (0..1) DISCOUNT  : Optionally uses a discount
+  - BOOKING (1) ----< (M) BOOKING_SEAT : Includes many seats
+  - BOOKING (1) ----< (M) PAYMENT      : Has many payments
+  - BOOKING (1) ----< (M) BOOKING_LOG  : Has many audit logs
+
+
+================================================================================
+ENTITY 12: BOOKING_SEAT
+================================================================================
+Description: Links a booking to specific flight seats. Each entry represents
+             one passenger on one seat within a booking.
+
++---------------------+-----------------+------+--------+-----------------------+
+|     Attribute       |    Data Type    | NULL | Key    | Description           |
++---------------------+-----------------+------+--------+-----------------------+
+| Id                  | UNIQUEIDENTIFIER| NO   | PK     | Primary key           |
+| BookingId           | UNIQUEIDENTIFIER| NO   | FK     | Ref: Booking.Id       |
+| FlightSeatId        | UNIQUEIDENTIFIER| NO   | FK     | Ref: FlightSeat.Id    |
+| PassengerName       | NVARCHAR(200)   | NO   |        | Passenger full name   |
+| PassportNumber      | NVARCHAR(50)    | NO   |        | Passport number       |
+| CreatedAt           | DATETIME2       | NO   |        | Record creation date  |
+| UpdatedAt           | DATETIME2       | YES  |        | Last update date      |
+| IsDeleted           | BIT             | NO   |        | Soft delete flag      |
++---------------------+-----------------+------+--------+-----------------------+
+
+Relationships:
+  - BOOKING_SEAT (M) >---- (1) BOOKING       : Belongs to a booking
+  - BOOKING_SEAT (M) >---- (1) FLIGHT_SEAT   : References a flight seat
+
+
+================================================================================
+ENTITY 13: PAYMENT
+================================================================================
+Description: Records payment transactions for bookings. Tracks amount,
+             method, and status of each payment attempt.
+
++---------------------+-----------------+------+--------+-----------------------+
+|     Attribute       |    Data Type    | NULL | Key    | Description           |
++---------------------+-----------------+------+--------+-----------------------+
+| Id                  | UNIQUEIDENTIFIER| NO   | PK     | Primary key           |
+| BookingId           | UNIQUEIDENTIFIER| NO   | FK     | Ref: Booking.Id       |
+| Amount              | DECIMAL(18,2)   | NO   |        | Payment amount        |
+| Currency            | NVARCHAR(10)    | NO   |        | Currency code (USD)   |
+| Method              | NVARCHAR(50)    | NO   |        | Payment method (enum) |
+| TransactionRef      | NVARCHAR(200)   | YES  |        | External txn ref      |
+| Status              | NVARCHAR(20)    | NO   |        | Payment status (enum) |
+| PaidAt              | DATETIME2       | YES  |        | Payment timestamp     |
+| CreatedAt           | DATETIME2       | NO   |        | Record creation date  |
+| UpdatedAt           | DATETIME2       | YES  |        | Last update date      |
+| IsDeleted           | BIT             | NO   |        | Soft delete flag      |
++---------------------+-----------------+------+--------+-----------------------+
+
+Relationships:
+  - PAYMENT (M) >---- (1) BOOKING       : Payment is for a booking
+
+
+================================================================================
+ENTITY 14: POLICY
+================================================================================
+Description: Defines cancellation and modification rules for an airline.
+             Each airline can have its own policy configuration.
+
++---------------------+-----------------+------+--------+-----------------------+
+|     Attribute       |    Data Type    | NULL | Key    | Description           |
++---------------------+-----------------+------+--------+-----------------------+
+| Id                  | UNIQUEIDENTIFIER| NO   | PK     | Primary key           |
+| TenantId            | UNIQUEIDENTIFIER| NO   | FK     | Ref: Tenant.Id        |
+| AllowCancellation   | BIT             | NO   |        | Enable cancel option  |
+| CancelDeadlineHours | INT             | NO   |        | Hours before departure|
+| CancelPenaltyPercent| DECIMAL(5,2)    | NO   |        | Penalty percentage    |
+| AllowModification   | BIT             | NO   |        | Enable modify option  |
+| ModifyDeadlineHours | INT             | NO   |        | Hours before departure|
+| ModifyFee           | DECIMAL(18,2)   | NO   |        | Modification fee      |
+| TermsAndConditions  | NVARCHAR(MAX)   | YES  |        | Terms text (HTML/text)|
+| CreatedAt           | DATETIME2       | NO   |        | Record creation date  |
+| UpdatedAt           | DATETIME2       | YES  |        | Last update date      |
+| IsDeleted           | BIT             | NO   |        | Soft delete flag      |
++---------------------+-----------------+------+--------+-----------------------+
+
+Relationships:
+  - POLICY (M) >---- (1) TENANT         : Policy belongs to a tenant
+
+
+================================================================================
+ENTITY 15: TAX_FEE
+================================================================================
+Description: Tax or fee configuration for an airline. Can be percentage-based
+             or fixed amount. Applied during price calculation.
+
++---------------------+-----------------+------+--------+-----------------------+
+|     Attribute       |    Data Type    | NULL | Key    | Description           |
++---------------------+-----------------+------+--------+-----------------------+
+| Id                  | UNIQUEIDENTIFIER| NO   | PK     | Primary key           |
+| TenantId            | UNIQUEIDENTIFIER| NO   | FK     | Ref: Tenant.Id        |
+| Name                | NVARCHAR(200)   | NO   |        | Tax/Fee name          |
+| Type                | NVARCHAR(20)    | NO   |        | "Tax" or "Fee"        |
+| Value               | DECIMAL(18,2)   | NO   |        | Tax/Fee value         |
+| IsPercentage        | BIT             | NO   |        | True=%, False=fixed   |
+| IsActive            | BIT             | NO   |        | Active flag           |
+| CreatedAt           | DATETIME2       | NO   |        | Record creation date  |
+| UpdatedAt           | DATETIME2       | YES  |        | Last update date      |
+| IsDeleted           | BIT             | NO   |        | Soft delete flag      |
++---------------------+-----------------+------+--------+-----------------------+
+
+Relationships:
+  - TAX_FEE (M) >---- (1) TENANT        : Tax/Fee belongs to a tenant
+
+
+================================================================================
+ENTITY 16: NOTIFICATION
+================================================================================
+Description: System notifications sent to users. Supports both in-app
+             notifications and email notifications.
+
++---------------------+-----------------+------+--------+-----------------------+
+|     Attribute       |    Data Type    | NULL | Key    | Description           |
++---------------------+-----------------+------+--------+-----------------------+
+| Id                  | UNIQUEIDENTIFIER| NO   | PK     | Primary key           |
+| UserId              | UNIQUEIDENTIFIER| NO   | FK     | Ref: User.Id          |
+| TenantId            | UNIQUEIDENTIFIER| NO   | FK     | Ref: Tenant.Id        |
+| Title               | NVARCHAR(200)   | NO   |        | Notification title    |
+| Body                | NVARCHAR(2000)  | NO   |        | Notification body     |
+| Type                | NVARCHAR(50)    | NO   |        | Notification type     |
+| IsRead              | BIT             | NO   |        | Read/unread flag      |
+| SentAt              | DATETIME2       | NO   |        | Sent timestamp        |
+| CreatedAt           | DATETIME2       | NO   |        | Record creation date  |
+| UpdatedAt           | DATETIME2       | YES  |        | Last update date      |
+| IsDeleted           | BIT             | NO   |        | Soft delete flag      |
++---------------------+-----------------+------+--------+-----------------------+
+
+Relationships:
+  - NOTIFICATION (M) >---- (1) USER     : Sent to a user
+  - NOTIFICATION (M) >---- (1) TENANT   : Belongs to a tenant
+
+
+================================================================================
+ENTITY 17: BOOKING_LOG
+================================================================================
+Description: Audit trail for all booking-related actions. Records who did 
+             what and when for complete traceability.
+
++---------------------+-----------------+------+--------+-----------------------+
+|     Attribute       |    Data Type    | NULL | Key    | Description           |
++---------------------+-----------------+------+--------+-----------------------+
+| Id                  | UNIQUEIDENTIFIER| NO   | PK     | Primary key           |
+| BookingId           | UNIQUEIDENTIFIER| NO   | FK     | Ref: Booking.Id       |
+| Action              | NVARCHAR(100)   | NO   |        | Action performed      |
+| Details             | NVARCHAR(2000)  | YES  |        | Action details/notes  |
+| PerformedBy         | NVARCHAR(200)   | NO   |        | User who performed    |
+| Timestamp           | DATETIME2       | NO   |        | Action timestamp      |
+| CreatedAt           | DATETIME2       | NO   |        | Record creation date  |
++---------------------+-----------------+------+--------+-----------------------+
+
+Relationships:
+  - BOOKING_LOG (M) >---- (1) BOOKING   : Log belongs to a booking
+
+
+================================================================================
+                     PART 2: ENUMERATIONS (ENUM VALUES)
+================================================================================
+
+ENUM: UserRole
+  - SuperAdmin
+  - AirlineAdmin
+  - Staff
+  - Passenger
+
+ENUM: FlightStatus
+  - Scheduled
+  - Boarding
+  - Departed
+  - Arrived
+  - Cancelled
+  - Delayed
+
+ENUM: SeatClass
+  - Economy
+  - Business
+  - First
+
+ENUM: SeatStatus
+  - Available
+  - Booked
+  - Blocked
+  - Locked         (temporarily held during booking)
+  - Maintenance
+
+ENUM: BookingStatus
+  - Pending
+  - Confirmed
+  - Modified
+  - Cancelled
+  - Refunded
+  - NoShow
+
+ENUM: PaymentStatus
+  - Pending
+  - Completed
+  - Failed
+  - Refunded
+
+ENUM: PaymentMethod
+  - CreditCard
+  - DebitCard
+  - Wallet
+  - BankTransfer
+
+ENUM: NotificationType
+  - BookingConfirmation
+  - BookingCancellation
+  - BookingModification
+  - FlightCancellation
+  - FlightDelay
+  - PaymentReceipt
+  - Refund
+  - Welcome
+  - EmailVerification
+  - PasswordReset
+
+
+================================================================================
+               PART 3: RELATIONSHIP SUMMARY TABLE
+================================================================================
+
++---------------------+---------------------+---------+------------------------+
+| Entity A            | Entity B            | Type    | Description            |
++---------------------+---------------------+---------+------------------------+
+| TENANT              | USER                | 1 : M   | Tenant has users       |
+| TENANT              | AIRCRAFT            | 1 : M   | Tenant owns aircraft   |
+| TENANT              | FLIGHT              | 1 : M   | Tenant operates flights|
+| TENANT              | POLICY              | 1 : M   | Tenant defines policies|
+| TENANT              | TAX_FEE             | 1 : M   | Tenant configures taxes|
+| TENANT              | OFFER               | 1 : M   | Tenant creates offers  |
+| TENANT              | DISCOUNT            | 1 : M   | Tenant creates codes   |
+| TENANT              | NOTIFICATION        | 1 : M   | Tenant sends notifs    |
++---------------------+---------------------+---------+------------------------+
+| AIRPORT             | FLIGHT (Origin)     | 1 : M   | Airport as origin      |
+| AIRPORT             | FLIGHT (Destination)| 1 : M   | Airport as destination |
++---------------------+---------------------+---------+------------------------+
+| AIRCRAFT            | SEAT                | 1 : M   | Aircraft has seats     |
+| AIRCRAFT            | FLIGHT              | 1 : M   | Aircraft on flights    |
++---------------------+---------------------+---------+------------------------+
+| SEAT                | FLIGHT_SEAT         | 1 : M   | Seat on flight inst.   |
++---------------------+---------------------+---------+------------------------+
+| FLIGHT              | FLIGHT_SEAT         | 1 : M   | Flight has seats       |
+| FLIGHT              | BOOKING             | 1 : M   | Flight has bookings    |
+| FLIGHT              | FLIGHT_OFFER        | 1 : M   | Flight has offers      |
++---------------------+---------------------+---------+------------------------+
+| OFFER               | FLIGHT_OFFER        | 1 : M   | Offer on flights       |
++---------------------+---------------------+---------+------------------------+
+| FLIGHT (M) <-> (M) OFFER via FLIGHT_OFFER | M : M   | Many-to-Many           |
++---------------------+---------------------+---------+------------------------+
+| USER                | BOOKING             | 1 : M   | User makes bookings    |
+| USER                | NOTIFICATION        | 1 : M   | User gets notifs       |
++---------------------+---------------------+---------+------------------------+
+| BOOKING             | BOOKING_SEAT        | 1 : M   | Booking has seats      |
+| BOOKING             | PAYMENT             | 1 : M   | Booking has payments   |
+| BOOKING             | BOOKING_LOG         | 1 : M   | Booking has logs       |
+| BOOKING             | DISCOUNT            | M : 0..1| Booking may use code   |
++---------------------+---------------------+---------+------------------------+
+| FLIGHT_SEAT         | BOOKING_SEAT        | 1 : M   | Seat reserved by       |
++---------------------+---------------------+---------+------------------------+
+
+Total Entities   : 17
+Total Relations  : 22
+
+
+================================================================================
+                   PART 4: EERD (ENHANCED ERD)
+              Specializations / Inheritance Hierarchies
+================================================================================
+
+EERD extends the basic ERD with specialization (IS-A) relationships.
+These represent subtypes/inheritance in the domain model.
+
+
+SPECIALIZATION 1: USER TYPES
+==============================
+
+                        +----------+
+                        |   USER   |
+                        | (Parent) |
+                        +----+-----+
+                             |
+            +----------------+----------------+
+            |                                 |
+     +------+-------+              +----------+--------+
+     |  ADMIN_USER  |              | PASSENGER_USER    |
+     |  (Subtype)   |              | (Subtype)         |
+     +--------------+              +-------------------+
+
+  USER (Parent Entity):
+    - Id, Email, FullName, Role, TenantId
+
+  ADMIN_USER (Specialization):
+    +---------------------+-----------------+--------------------------------+
+    | Attribute           | Data Type       | Description                    |
+    +---------------------+-----------------+--------------------------------+
+    | Id                  | UNIQUEIDENTIFIER| PK                             |
+    | UserId              | UNIQUEIDENTIFIER| FK -> User.Id                  |
+    | AdminLevel          | NVARCHAR(50)    | Senior / Junior / Manager      |
+    | Permissions         | NVARCHAR(MAX)   | JSON permissions list          |
+    +---------------------+-----------------+--------------------------------+
+
+  PASSENGER_USER (Specialization):
+    +---------------------+-----------------+--------------------------------+
+    | Attribute           | Data Type       | Description                    |
+    +---------------------+-----------------+--------------------------------+
+    | Id                  | UNIQUEIDENTIFIER| PK                             |
+    | UserId              | UNIQUEIDENTIFIER| FK -> User.Id                  |
+    | PassportNumber      | NVARCHAR(50)    | Travel passport number         |
+    | Nationality         | NVARCHAR(100)   | Passenger nationality          |
+    | DateOfBirth         | DATE            | Date of birth                  |
+    | FrequentFlyerNumber | NVARCHAR(50)    | Loyalty program number         |
+    +---------------------+-----------------+--------------------------------+
+
+  Specialization Type: Partial, Disjoint
+  Discriminator: Role column in USER table
+
+
+SPECIALIZATION 2: PAYMENT TYPES
+=================================
+
+                       +-----------+
+                       |  PAYMENT  |
+                       | (Parent)  |
+                       +-----+-----+
+                             |
+            +----------------+----------------+
+            |                                 |
+     +------+--------+           +-----------+---------+
+     | CARD_PAYMENT   |           | WALLET_PAYMENT     |
+     | (Subtype)      |           | (Subtype)          |
+     +----------------+           +--------------------+
+
+  PAYMENT (Parent Entity):
+    - Id, BookingId, Amount, Currency, Method, Status
+
+  CARD_PAYMENT (Specialization):
+    +---------------------+-----------------+--------------------------------+
+    | Attribute           | Data Type       | Description                    |
+    +---------------------+-----------------+--------------------------------+
+    | Id                  | UNIQUEIDENTIFIER| PK                             |
+    | PaymentId           | UNIQUEIDENTIFIER| FK -> Payment.Id               |
+    | Last4Digits         | NVARCHAR(4)     | Last 4 digits of card          |
+    | CardBrand           | NVARCHAR(50)    | Visa / MasterCard / Amex       |
+    +---------------------+-----------------+--------------------------------+
+
+  WALLET_PAYMENT (Specialization):
+    +---------------------+-----------------+--------------------------------+
+    | Attribute           | Data Type       | Description                    |
+    +---------------------+-----------------+--------------------------------+
+    | Id                  | UNIQUEIDENTIFIER| PK                             |
+    | PaymentId           | UNIQUEIDENTIFIER| FK -> Payment.Id               |
+    | WalletProvider      | NVARCHAR(100)   | Apple Pay / Google Pay / PayPal|
+    | WalletRef           | NVARCHAR(200)   | Wallet transaction reference   |
+    +---------------------+-----------------+--------------------------------+
+
+  Specialization Type: Partial, Disjoint
+  Discriminator: Method column in PAYMENT table
+
+
+SPECIALIZATION 3: NOTIFICATION TYPES
+=======================================
+
+                     +---------------+
+                     | NOTIFICATION  |
+                     |   (Parent)    |
+                     +-------+-------+
+                             |
+            +----------------+----------------+
+            |                                 |
+     +------+-----------+         +-----------+---------+
+     | EMAIL_NOTIFICATION|         | INAPP_NOTIFICATION |
+     | (Subtype)         |         | (Subtype)          |
+     +-------------------+         +--------------------+
+
+  NOTIFICATION (Parent Entity):
+    - Id, UserId, TenantId, Title, Body, Type, SentAt
+
+  EMAIL_NOTIFICATION (Specialization):
+    +---------------------+-----------------+--------------------------------+
+    | Attribute           | Data Type       | Description                    |
+    +---------------------+-----------------+--------------------------------+
+    | Id                  | UNIQUEIDENTIFIER| PK                             |
+    | NotificationId      | UNIQUEIDENTIFIER| FK -> Notification.Id          |
+    | EmailTo             | NVARCHAR(256)   | Recipient email address        |
+    | Subject             | NVARCHAR(500)   | Email subject line             |
+    | Delivered           | BIT             | Delivery status flag           |
+    +---------------------+-----------------+--------------------------------+
+
+  INAPP_NOTIFICATION (Specialization):
+    +---------------------+-----------------+--------------------------------+
+    | Attribute           | Data Type       | Description                    |
+    +---------------------+-----------------+--------------------------------+
+    | Id                  | UNIQUEIDENTIFIER| PK                             |
+    | NotificationId      | UNIQUEIDENTIFIER| FK -> Notification.Id          |
+    | IsRead              | BIT             | Read/Unread flag               |
+    | Icon                | NVARCHAR(100)   | Icon identifier (e.g., "bell") |
+    +---------------------+-----------------+--------------------------------+
+
+  Specialization Type: Total, Disjoint
+  Discriminator: Type column in NOTIFICATION table
+
+
+================================================================================
+            PART 5: ERD TEXT-BASED DIAGRAM (FULL SYSTEM)
+================================================================================
+
+NOTE: Copy this text diagram to Word/PowerPoint. Use Courier New or 
+      Consolas font for proper alignment.
+
+
+                                 +-----------+
+                                 |   TENANT  |
+                                 +-----+-----+
+                                       |
+          +----------+----------+------+------+----------+---------+---------+
+          |          |          |      |      |          |         |         |
+     +----+---+ +---+---+ +---+---+ +-+--+ +-+---+ +---+---+ +--+---+ +---+---+
+     |  USER  | |AIRCRAFT| | FLIGHT| |POLICY| |TAX  | | OFFER | |DISCNT| | NOTIF |
+     +----+---+ +---+---+ +---+---+ +-----+ |FEE  | +---+---+ +--+---+ +-------+
+          |         |          |              +-----+     |        |
+          |    +----+---+     |                           |        |
+          |    |  SEAT  |     +----------+--------+       |        |
+          |    +----+---+     |          |        |       |        |
+          |         |    +----+-----+ +--+---+ +--+------++        |
+          |         |    |FLIGHT_SEAT| |BOOKING| |FLIGHT   |        |
+          |         |    +----+-----+ +---+--+ |OFFER     |        |
+          |         |         |           |    +----------+        |
+          |         +---------+           |                        |
+          |                          +----+----+----+              |
+          |                          |    |    |    |              |
+          |                    +-----++ +-+--+ +---+---+          |
+          |                    |BKNG  | |PMNT| |BOOKING|          |
+          |                    |SEAT  | |    | |LOG    |          |
+          |                    +------+ +----+ +-------+          |
+          |                                                       |
+          +-------------------------------------------------------+
+
+
+     +---+------+
+     |  AIRPORT |---< FLIGHT (OriginAirportId)
+     |          |---< FLIGHT (DestinationAirportId)
+     +----------+
+
+
+Legend:
+  +---------+
+  | ENTITY  |     Rectangle = Entity
+  +---------+
+
+  ----<         One-to-Many relationship (one on line side, many on arrow side)
+  >----         Many-to-One (reverse direction)
+  ----+----     Junction / Connection point
+
+
+================================================================================
+            PART 6: COMPLETE RELATIONSHIP NOTATION
+================================================================================
+
+1.  TENANT (1) --------< (M) USER
+    "A tenant has many users; a user belongs to one tenant"
+
+2.  TENANT (1) --------< (M) AIRCRAFT
+    "A tenant owns many aircraft; an aircraft belongs to one tenant"
+
+3.  TENANT (1) --------< (M) FLIGHT
+    "A tenant operates many flights; a flight belongs to one tenant"
+
+4.  TENANT (1) --------< (M) POLICY
+    "A tenant defines many policies; a policy belongs to one tenant"
+
+5.  TENANT (1) --------< (M) TAX_FEE
+    "A tenant configures many taxes/fees; a tax/fee belongs to one tenant"
+
+6.  TENANT (1) --------< (M) OFFER
+    "A tenant creates many offers; an offer belongs to one tenant"
+
+7.  TENANT (1) --------< (M) DISCOUNT
+    "A tenant creates many discount codes; a discount belongs to one tenant"
+
+8.  AIRPORT (1) --------< (M) FLIGHT [as Origin]
+    "An airport is origin for many flights; a flight has one origin airport"
+
+9.  AIRPORT (1) --------< (M) FLIGHT [as Destination]
+    "An airport is destination for many flights; a flight has one destination"
+
+10. AIRCRAFT (1) --------< (M) SEAT
+    "An aircraft contains many seats; a seat belongs to one aircraft"
+
+11. AIRCRAFT (1) --------< (M) FLIGHT
+    "An aircraft is assigned to many flights; a flight uses one aircraft"
+
+12. FLIGHT (1) --------< (M) FLIGHT_SEAT
+    "A flight has many flight seats; a flight seat belongs to one flight"
+
+13. SEAT (1) --------< (M) FLIGHT_SEAT
+    "A seat maps to many flight seats; a flight seat references one seat"
+
+14. FLIGHT (M) --------< >-------- (M) OFFER  [via FLIGHT_OFFER]
+    "A flight can have many offers; an offer can apply to many flights"
+    Junction table: FLIGHT_OFFER (FlightId, OfferId)
+
+15. USER (1) --------< (M) BOOKING
+    "A user makes many bookings; a booking belongs to one user"
+
+16. FLIGHT (1) --------< (M) BOOKING
+    "A flight has many bookings; a booking is for one flight"
+
+17. BOOKING (M) --------< (0..1) DISCOUNT
+    "A booking may use one discount code; a discount can be used in many bookings"
+
+18. BOOKING (1) --------< (M) BOOKING_SEAT
+    "A booking includes many booking seats; a booking seat belongs to one booking"
+
+19. FLIGHT_SEAT (1) --------< (M) BOOKING_SEAT
+    "A flight seat is reserved by many booking seats (only 1 confirmed)"
+
+20. BOOKING (1) --------< (M) PAYMENT
+    "A booking has many payments; a payment belongs to one booking"
+
+21. BOOKING (1) --------< (M) BOOKING_LOG
+    "A booking has many log entries; a log entry belongs to one booking"
+
+22. USER (1) --------< (M) NOTIFICATION
+    "A user receives many notifications; a notification is for one user"
+
+
+================================================================================
+            PART 7: DATABASE INDEXES (RECOMMENDED)
+================================================================================
+
++---------------------------+----------------------------------+----------------+
+| Table                     | Index Columns                    | Type           |
++---------------------------+----------------------------------+----------------+
+| User                      | (TenantId, Email)                | Unique         |
+| User                      | (TenantId, Role)                 | Non-Clustered  |
+| Airport                   | (IataCode)                       | Unique         |
+| Airport                   | (IcaoCode)                       | Unique         |
+| Airport                   | (City, Country)                  | Non-Clustered  |
+| Aircraft                  | (TenantId, RegistrationCode)     | Unique         |
+| Flight                    | (TenantId, DepartureUtc)         | Non-Clustered  |
+| Flight                    | (OriginAirportId, DestAirportId) | Non-Clustered  |
+| Flight                    | (FlightNumber, TenantId)         | Unique         |
+| FlightSeat                | (FlightId, SeatId)               | Unique         |
+| FlightSeat                | (FlightId, Status)               | Non-Clustered  |
+| Booking                   | (BookingRef)                     | Unique         |
+| Booking                   | (UserId, Status)                 | Non-Clustered  |
+| Booking                   | (TenantId, BookedAt)             | Non-Clustered  |
+| Booking                   | (FlightId, Status)               | Non-Clustered  |
+| Discount                  | (TenantId, Code)                 | Unique         |
+| FlightOffer               | (FlightId, OfferId)              | Unique         |
+| Notification              | (UserId, IsRead)                 | Non-Clustered  |
++---------------------------+----------------------------------+----------------+
+
+
+================================================================================
+                              END OF DOCUMENT
+                    Zahrawy AirFly - ERD Document v1.0
+                         Total Entities: 17
+                      Total Relationships: 22
+                       Total EERD Subtypes: 6
+================================================================================

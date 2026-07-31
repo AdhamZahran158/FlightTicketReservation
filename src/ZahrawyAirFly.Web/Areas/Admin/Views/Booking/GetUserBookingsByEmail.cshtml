@@ -1,0 +1,198 @@
+@using ZahrawyAirFly.Domain.Entities
+@using ZahrawyAirFly.Domain.Enums
+@model IEnumerable<Booking>?
+@{
+    ViewData["Title"] = "User Bookings";
+    var userEmail = ViewBag.UserEmail as string;
+}
+    @section Styles {
+<style> 
+        .table th {
+            background: #f8f9fa;
+        }
+        .badge-pill {
+            padding: 4px 12px;
+            border-radius: 50px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+        .badge-confirmed {
+            background: #d4edda;
+            color: #155724;
+        }
+        .badge-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .badge-cancelled {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .badge-refunded {
+            background: #cce5ff;
+            color: #004085;
+        }
+        .action-buttons {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 6px;
+            align-items: center;
+        }
+        .btn-sm-outline {
+            background: transparent;
+            border: 1px solid #f8b600;
+            padding: 3px 12px;
+            border-radius: 20px;
+            color: #f8b600;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            text-decoration: none;
+            display: inline-block;
+        }
+            .btn-sm-outline:hover {
+                background: #f8b600;
+                color: #222;
+                text-decoration: none;
+            }
+        .btn-sm-danger {
+            background: #dc3545;
+            border: none;
+            padding: 3px 12px;
+            border-radius: 20px;
+            color: #fff;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            text-decoration: none;
+            display: inline-block;
+        }
+            .btn-sm-danger:hover {
+                background: #c82333;
+                color: #fff;
+                text-decoration: none;
+            }
+        .text-muted-cancelled {
+            color: #6c757d;
+            font-size: 0.75rem;
+        }
+        .search-box {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+        }
+</style>
+}
+    <!-- ════════════════ BANNER / BREADCRUMB ════════════════ -->
+    <section class="about-banner relative">
+        <div class="overlay overlay-bg"></div>
+        <div class="container">
+            <div class="row d-flex align-items-center justify-content-center">
+                <div class="about-content col-lg-12">
+                    <h1 class="text-white">User Bookings</h1>
+                    <p class="text-white link-nav">
+                        <a href="/admin/home">Home</a>
+                        <span class="lnr lnr-arrow-right"></span>
+                        <a href="/admin/booking/index">Bookings</a>
+                        <span class="lnr lnr-arrow-right"></span>
+                        <label>Search by Email</label>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- ════════════════ MAIN CONTENT ════════════════ -->
+    <section class="section-gap">
+        <div class="container">
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                <h2><i class="fas fa-user-search"></i> Search User Bookings</h2>
+                <a href="@Url.Action("Index")" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to All Bookings
+                </a>
+            </div>
+            <hr>
+            @if (TempData["error"] != null)
+            {
+                <div class="alert alert-danger">@TempData["error"]</div>
+            }
+            @if (TempData["success"] != null)
+            {
+                <div class="alert alert-success">@TempData["success"]</div>
+            }
+            <!-- Search Form -->
+            <div class="search-box">
+                <form method="get" action="@Url.Action("GetUserBookingsByEmail")">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="form-group">
+                                <label>Enter User Email</label>
+                                <input type="email" name="email" class="form-control" placeholder="user@example.com" value="@(ViewBag.SearchedEmail ?? "")" required />
+                            </div>
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100"><i class="fas fa-search"></i> Search</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            @if (!string.IsNullOrEmpty(userEmail))
+            {
+                <h4>Bookings for: <span class="text-primary">@userEmail</span></h4>
+                <hr />
+            }
+            @if (Model != null && Model.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Booking Ref</th>
+                                <th>Flight #</th>
+                                <th>Route</th>
+                                <th>Status</th>
+                                <th>Total</th>
+                                <th>Booked At</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var b in Model)
+                            {
+                                var route = $"{b.Flight?.OriginAirport?.IataCode} → {b.Flight?.DestinationAirport?.IataCode}";
+                                var statusClass = b.Status.ToString().ToLower();
+                                <tr>
+                                    <td><strong>@b.BookingRef</strong></td>
+                                    <td>@b.Flight?.FlightNumber</td>
+                                    <td>@route</td>
+                                    <td><span class="badge-pill badge-@statusClass">@b.Status</span></td>
+                                    <td>$@b.TotalAmount.ToString("F2")</td>
+                                    <td>@b.BookedAt.ToString("dd MMM yyyy HH:mm")</td>
+                                    <td>
+                                        @if (b.Status != BookingStatus.Cancelled)
+                                        {
+                                            <div class="action-buttons">
+                                                <a href="@Url.Action("ModifyBooking", new { id = b.Id })" class="btn-sm-outline">
+                                                    <i class="fas fa-edit"></i> Modify
+                                                </a>
+                                                <a href="@Url.Action("CancelBooking", new { id = b.Id })" class="btn-sm-danger" onclick="return confirm('Cancel this booking?');">
+                                                    <i class="fas fa-times"></i> Cancel
+                                                </a>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted-cancelled">Cancelled</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else if (Model != null && !Model.Any() && !string.IsNullOrEmpty(userEmail))
+            {
+                <div class="alert alert-info">No bookings found for this user.</div>
+            }
+        </div>
+    </section>

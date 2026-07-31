@@ -1,0 +1,402 @@
+@model AddFlightVM
+    <!-- Bootstrap 4 + Font Awesome -->
+    <!-- Google Fonts -->
+    @section Styles {
+<style>
+.form-container {
+            background: #fff;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 25px;
+        }
+        label {
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        .required:after {
+            content: " *";
+            color: #dc3545;
+        }
+        .form-control, .custom-select {
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            padding: 12px 15px;
+            font-family: 'Poppins', sans-serif;
+        }
+            .form-control:focus, .custom-select:focus {
+                border-color: #f8b600;
+                box-shadow: 0 0 0 0.2rem rgba(248,182,0,0.25);
+            }
+        .primary-btn {
+            background: #f8b600;
+            border: none;
+            padding: 12px 40px;
+            font-weight: 600;
+            border-radius: 30px;
+            color: #222;
+            transition: 0.3s;
+            cursor: pointer;
+        }
+            .primary-btn:hover {
+                background: #e0a800;
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(248,182,0,0.3);
+            }
+        .secondary-btn {
+            background: #6c757d;
+            border: none;
+            padding: 12px 30px;
+            font-weight: 500;
+            border-radius: 30px;
+            color: white;
+            transition: 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+            .secondary-btn:hover {
+                background: #5a6268;
+                color: #fff;
+                text-decoration: none;
+            }
+        .info-text {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+        .icon-input {
+            position: relative;
+        }
+            .icon-input i {
+                position: absolute;
+                left: 15px;
+                top: 50%;
+                transform: translateY(-50%);
+                color: #f8b600;
+            }
+            .icon-input input, .icon-input select {
+                padding-left: 40px;
+            }
+        .baggage-row {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 5px;
+        }
+        @@media (max-width: 768px) {
+            .form-container {
+                padding: 25px;
+            }
+        }
+</style>
+}
+    <!-- Banner Area -->
+    <section class="about-banner relative">
+        <div class="overlay overlay-bg"></div>
+        <div class="container">
+            <div class="row d-flex align-items-center justify-content-center">
+                <div class="about-content col-lg-12">
+                    <h1 class="text-white">Add New Flight</h1>
+                    <p class="text-white link-nav">
+                        <a href="index.html">Home</a>
+                        <span class="lnr lnr-arrow-right"></span>
+                        <a href="/admin/flight/index">Flights</a>
+                        <span class="lnr lnr-arrow-right"></span>
+                        <label font-color="white">Add Flight</label>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Add Flight Form Section -->
+    <section class="section-gap">
+        <div class="container">
+            <div class="row d-flex justify-content-center">
+                <div class="col-lg-8">
+                    <div class="title text-center">
+                        <h1 class="mb-10">Schedule New Flight</h1>
+                        <p>Enter flight details, route, aircraft, and pricing</p>
+                    </div>
+                </div>
+            </div>
+            <div class="row justify-content-center mt-4">
+                <div class="col-lg-10">
+                    <div class="form-container">
+                        <form asp-area="Admin" asp-controller="Flight" asp-action="AddFlight" method="post" id="flightForm">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="TenantId" value="TENANT_ID_PLACEHOLDER">
+                            <!-- Flight Number & Aircraft -->
+                            <div class="row">
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label class="required">Flight Number</label>
+                                        <div class="icon-input">
+                                            <i class="fas fa-hashtag"></i>
+                                            <input type="text" name="FlightNumber" id="FlightNumber" class="form-control" placeholder="e.g., ZA101" required>
+                                        </div>
+                                        <small class="info-text">Unique flight identifier (e.g., ZA101, QR702)</small>
+                                    </div>
+                                </div>
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label class="required">Aircraft</label>
+                                        <div class="icon-input">
+                                            <i class="fas fa-fighter-jet"></i>
+                                            <select name="AircraftId" id="AircraftId" class="custom-select" required>
+                                                <option value="">Select Aircraft</option>
+                                                @foreach(var craft in Model.Aircrafts)
+                                                {
+                                                <option value="@craft.Id">@craft.Model</option>
+                                                }
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Route: Origin & Destination -->
+                            <div class="row">
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label class="required">Origin Airport</label>
+                                        <div class="icon-input">
+                                            <i class="fas fa-plane-departure"></i>
+                                            <select name="OriginAirportId" id="OriginAirportId" class="custom-select" required>
+                                                <option value="">Select Origin Airport</option>
+                                                @foreach(var item in Model.Airports)
+                                                {
+                                                <option value="@item.Id">@item.Name - @item.Country (@item.IataCode)</option>
+                                                }
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label class="required">Destination Airport</label>
+                                        <div class="icon-input">
+                                            <i class="fas fa-plane-arrival"></i>
+                                            <select name="DestinationAirportId" id="DestinationAirportId" class="custom-select" required>
+                                                <option value="">Select Destination Airport</option>
+                                                @foreach (var item in Model.Airports)
+                                                {
+                                                    <option value="@item.Id">@item.Name - @item.Country (@item.IataCode)</option>
+                                                }
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Schedule: Departure & Arrival UTC -->
+                            <div class="row">
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label class="required">Departure (UTC)</label>
+                                        <div class="icon-input">
+                                            <i class="fas fa-calendar-alt"></i>
+                                            <input type="datetime-local" name="DepartureUtc" id="DepartureUtc" class="form-control" required>
+                                        </div>
+                                        <small class="info-text">Local time will be converted to UTC on server</small>
+                                    </div>
+                                </div>
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label class="required">Arrival (UTC)</label>
+                                        <div class="icon-input">
+                                            <i class="fas fa-calendar-check"></i>
+                                            <input type="datetime-local" name="ArrivalUtc" id="ArrivalUtc" class="form-control" required>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Gate & Terminal -->
+                            <div class="row">
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label>Gate</label>
+                                        <input type="text" name="Gate" class="form-control" placeholder="e.g., B22">
+                                    </div>
+                                </div>
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label>Terminal</label>
+                                        <input type="text" name="Terminal" class="form-control" placeholder="e.g., 4">
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Flight Status -->
+                            <div class="form-group">
+                                <label>Flight Status</label>
+                                <select name="Status" class="custom-select">
+                                    <option value="Scheduled" selected>Scheduled</option>
+                                    <option value="Delayed">Delayed</option>
+                                    <option value="Boarding">Boarding</option>
+                                    <option value="Departed">Departed</option>
+                                    <option value="Arrived">Arrived</option>
+                                    <option value="Cancelled">Cancelled</option>
+                                </select>
+                            </div>
+                            <!-- Pricing Section -->
+                            <div class="form-group">
+                                <label>Base Prices (USD)</label>
+                                <div class="baggage-row">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="form-group mb-0">
+                                                <label class="small">Economy Class</label>
+                                                <input type="number" step="0.01" name="BasePriceEconomy" class="form-control" placeholder="e.g., 450" value="0">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group mb-0">
+                                                <label class="small">Business Class</label>
+                                                <input type="number" step="0.01" name="BasePriceBusiness" class="form-control" placeholder="e.g., 1200" value="0">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group mb-0">
+                                                <label class="small">First Class</label>
+                                                <input type="number" step="0.01" name="BasePriceFirst" class="form-control" placeholder="e.g., 2500" value="0">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Baggage Allowances -->
+                            <div class="form-group">
+                                <label>Baggage Policy</label>
+                                <div class="baggage-row">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="form-group mb-0">
+                                                <label class="small">Max Baggage (kg)</label>
+                                                <input type="number" name="MaxBaggageKg" class="form-control" placeholder="e.g., 30" value="30">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group mb-0">
+                                                <label class="small">Free Baggage (kg)</label>
+                                                <input type="number" name="FreeBaggageKg" class="form-control" placeholder="e.g., 23" value="23">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group mb-0">
+                                                <label class="small">Extra Baggage (per kg $)</label>
+                                                <input type="number" step="0.01" name="ExtraBaggagePerKg" class="form-control" placeholder="e.g., 15" value="15">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Confirmation -->
+                            <div class="form-group">
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" class="custom-control-input" id="confirmDetails" required>
+                                    <label class="custom-control-label" for="confirmDetails">
+                                        I confirm that all flight details are accurate and complete
+                                    </label>
+                                </div>
+                            </div>
+                            <!-- Action Buttons -->
+                            <div class="form-group text-center mt-4">
+                                <button type="submit" class="primary-btn">
+                                    <i class="fas fa-plus-circle"></i> Add Flight
+                                </button>
+                                <a href="flights-index.html" class="secondary-btn ml-2">
+                                    <i class="fas fa-times"></i> Cancel
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <!-- Helpful Tips -->
+            <div class="row justify-content-center mt-5">
+                <div class="col-lg-10">
+                    <div class="alert alert-info" style="background: #e8f4fd; border: none; border-radius: 10px;">
+                        <h6><i class="fas fa-info-circle"></i> Flight Scheduling Guidelines:</h6>
+                        <ul class="mb-0 small">
+                            <li><strong>Flight Number:</strong> Unique code for identification, typically airline code + number (e.g., ZA101).</li>
+                            <li><strong>UTC Times:</strong> All flight times are stored in UTC. Your local input will be converted on the server.</li>
+                            <li><strong>Pricing:</strong> Set base fares for each cabin class. These can be overridden by offers later.</li>
+                            <li><strong>Baggage:</strong> Define free allowance, maximum allowed, and extra charge per kg.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Minimal JavaScript for validation and datetime handling -->
+@section Scripts {
+<script>
+        // Auto-format flight number (uppercase, no spaces)
+        const flightInput = document.getElementById('FlightNumber');
+        if (flightInput) {
+            flightInput.addEventListener('input', function() {
+                this.value = this.value.toUpperCase().replace(/\s/g, '');
+            });
+        }
+        // Ensure arrival is after departure
+        const depInput = document.getElementById('DepartureUtc');
+        const arrInput = document.getElementById('ArrivalUtc');
+        function validateTimes() {
+            if (depInput.value && arrInput.value) {
+                if (new Date(arrInput.value) <= new Date(depInput.value)) {
+                    arrInput.setCustomValidity('Arrival time must be after departure time');
+                    arrInput.reportValidity();
+                } else {
+                    arrInput.setCustomValidity('');
+                }
+            }
+        }
+        depInput.addEventListener('change', validateTimes);
+        arrInput.addEventListener('change', validateTimes);
+        // Form validation before submit
+        document.getElementById('flightForm').addEventListener('submit', function(e) {
+            const flightNumber = document.getElementById('FlightNumber').value.trim();
+            const aircraft = document.getElementById('AircraftId').value;
+            const origin = document.getElementById('OriginAirportId').value;
+            const destination = document.getElementById('DestinationAirportId').value;
+            const departure = document.getElementById('DepartureUtc').value;
+            const arrival = document.getElementById('ArrivalUtc').value;
+            if (!flightNumber) {
+                e.preventDefault();
+                alert('Please enter a flight number');
+                return false;
+            }
+            if (!aircraft) {
+                e.preventDefault();
+                alert('Please select an aircraft');
+                return false;
+            }
+            if (!origin) {
+                e.preventDefault();
+                alert('Please select origin airport');
+                return false;
+            }
+            if (!destination) {
+                e.preventDefault();
+                alert('Please select destination airport');
+                return false;
+            }
+            if (origin === destination) {
+                e.preventDefault();
+                alert('Origin and destination airports cannot be the same');
+                return false;
+            }
+            if (!departure) {
+                e.preventDefault();
+                alert('Please set departure time');
+                return false;
+            }
+            if (!arrival) {
+                e.preventDefault();
+                alert('Please set arrival time');
+                return false;
+            }
+            return true;
+        });
+    </script>
+}

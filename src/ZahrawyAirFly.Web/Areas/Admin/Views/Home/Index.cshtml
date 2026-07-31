@@ -1,0 +1,774 @@
+@using ZahrawyAirFly.Domain.Entities
+@using ZahrawyAirFly.Domain.Enums
+@model AdminHomeVM
+@{
+    var totalBookings = Model.TotalBookings;
+    var totalRevenue = Model.Payments?.Where(p => p.Status == PaymentStatus.Completed).Sum(p => p.Amount) ?? 0;
+    var activeFlights = Model.ActiveFlights;
+    var totalPassengersToday = Model.Bookings?
+        .Where(b => b.Flight?.DepartureUtc.Date == DateTime.UtcNow.Date && b.Status == BookingStatus.Confirmed)
+        .SelectMany(b => b.BookingSeats)
+        .Count() ?? 0;
+    var statusCounts = Model.BookingStatusCounts;
+    var totalCount = statusCounts.Values.Sum();
+    var topRoutes = Model.TopRoutes;
+    var recentBookings = Model.Bookings?
+        .OrderByDescending(b => b.BookedAt)
+        .Take(10)
+        .ToList() ?? new List<Booking>();
+    var todayFlights = Model.Flights?
+        .Where(f => f.DepartureUtc.Date == DateTime.UtcNow.Date && f.Status != FlightStatus.Cancelled)
+        .OrderBy(f => f.DepartureUtc)
+        .Take(10)
+        .ToList() ?? new List<Flight>();
+    var airportCount = Model.Flights?.Select(f => f.OriginAirportId).Concat(Model.Flights?.Select(f => f.DestinationAirportId)).Distinct().Count() ?? 0;
+    var aircraftCount = Model.Flights?.Select(f => f.AircraftId).Distinct().Count() ?? 0;
+    var tenantCount = Model.Tenants?.Count ?? 0;
+    // Monthly revenue data for chart (fix: handle null)
+    var monthlyRevenue = (Model.Payments ?? Enumerable.Empty<Payment>())
+        .Where(p => p.Status == PaymentStatus.Completed)
+        .GroupBy(p => new { p.PaidAt?.Year, p.PaidAt?.Month })
+        .Where(g => g.Key.Year.HasValue && g.Key.Month.HasValue)
+        .Select(g => new { Month = new DateTime(g.Key.Year.Value, g.Key.Month.Value, 1), Total = g.Sum(p => p.Amount) })
+        .OrderBy(x => x.Month)
+        .ToList();
+    // Generate chart data points (last 12 months)
+    var months = Enumerable.Range(0, 12).Select(i => DateTime.UtcNow.AddMonths(-i).AddDays(1 - DateTime.UtcNow.Day)).Reverse().ToList();
+    var chartData = months.Select(m => new { Month = m, Total = monthlyRevenue.FirstOrDefault(r => r.Month.Year == m.Year && r.Month.Month == m.Month)?.Total ?? 0 }).ToList();
+    // Recent notifications from bookings (last 5)
+    var notifications = new List<(string icon, string color, string title, string time, bool unread)>();
+    foreach (var b in recentBookings.Take(5))
+    {
+        var statusText = b.Status.ToString();
+        var icon = b.Status == BookingStatus.Confirmed ? "fa-check" : (b.Status == BookingStatus.Cancelled ? "fa-times" : "fa-info");
+        var color = b.Status == BookingStatus.Confirmed ? "green" : (b.Status == BookingStatus.Cancelled ? "red" : "blue");
+        var title = $"{b.BookingRef} {statusText}";
+        var time = b.BookedAt.ToString("hh:mm tt");
+        notifications.Add((icon, color, title, time, true));
+    }
+}
+    @section Styles {
+<style>
+:root {
+            --primary: #1e2756;
+            --accent: #f8b600;
+            --bg-light: #f9f9ff;
+            --border: #e9ecef;
+            --text: #222;
+            --text-muted: #777;
+            --card-radius: 12px;
+            --shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        .card {
+            background: #fff;
+            border-radius: var(--card-radius);
+            box-shadow: var(--shadow);
+            border: none;
+            overflow: hidden;
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            background: #fff;
+        }
+        .card-title {
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--primary);
+        }
+        .card-sub {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        .card-action {
+            font-size: 0.8rem;
+            color: var(--accent);
+            text-decoration: none;
+        }
+        .card-action:hover {
+            color: #e0a800;
+        }
+        .card-
+        .kpi-card {
+            background: #fff;
+            border-radius: var(--card-radius);
+            box-shadow: var(--shadow);
+            padding: 18px 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            transition: 0.2s;
+        }
+        .kpi-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+        }
+        .kpi-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            color: #fff;
+            flex-shrink: 0;
+        }
+        .kpi-icon.orange { background: #f9673c; }
+        .kpi-icon.green { background: #27ae60; }
+        .kpi-icon.blue { background: #2980b9; }
+        .kpi-icon.yellow { background: #f39c12; }
+        .kpi-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .kpi-value {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--primary);
+            line-height: 1.2;
+        }
+        .kpi-delta {
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        .kpi-delta.up { color: #27ae60; }
+        .kpi-delta.down { color: #e74c3c; }
+        .table-wrap {
+            overflow-x: auto;
+            padding: 0 4px 4px 4px;
+        }
+        .dash-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        .dash-table th {
+            text-align: left;
+            padding: 10px 14px;
+            font-weight: 600;
+            color: var(--primary);
+            background: #f8f9fa;
+            border-bottom: 2px solid var(--border);
+        }
+        .dash-table td {
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+        }
+        .dash-table tr:last-child td {
+            border-bottom: none;
+        }
+        .td-bold { font-weight: 600; }
+        .td-muted { color: var(--text-muted); font-size: 0.8rem; }
+        .route {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .route-code {
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+        .route-arrow {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+        .badge-pill {
+            display: inline-block;
+            padding: 3px 12px;
+            border-radius: 50px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+        .pill-green { background: #d4edda; color: #155724; }
+        .pill-yellow { background: #fff3cd; color: #856404; }
+        .pill-red { background: #f8d7da; color: #721c24; }
+        .pill-blue { background: #cce5ff; color: #004085; }
+        .pill-orange { background: #ffe5cc; color: #b35c00; }
+        .pill-gray { background: #e9ecef; color: #495057; }
+        .donut-wrap {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .donut-svg { width: 100px; height: 100px; }
+        .donut-legend { font-size: 0.78rem; }
+        .legend-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            gap: 20px;
+        }
+        .legend-left { display: flex; align-items: center; gap: 8px; }
+        .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+        .legend-right { font-weight: 500; }
+        .stat-bar-wrap > div { margin-bottom: 10px; }
+        .stat-bar-top {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            margin-bottom: 3px;
+        }
+        .stat-bar-track {
+            height: 6px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .stat-bar-fill {
+            height: 100%;
+            border-radius: 10px;
+            background: #f9673c;
+        }
+        .stat-bar-fill.green { background: #27ae60; }
+        .stat-bar-fill.blue { background: #2980b9; }
+        .stat-bar-fill.yellow { background: #f39c12; }
+        .notif-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 18px;
+            border-bottom: 1px solid var(--border);
+            position: relative;
+        }
+        .notif-item:last-child { border-bottom: none; }
+        .notif-item.unread { background: #fafbff; }
+        .notif-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 0.75rem;
+            flex-shrink: 0;
+        }
+        .notif-icon.orange { background: #f9673c; }
+        .notif-icon.green { background: #27ae60; }
+        .notif-icon.red { background: #e74c3c; }
+        .notif-icon.yellow { background: #f39c12; }
+        .notif-icon.blue { background: #2980b9; }
+        .notif-text { font-size: 0.85rem; }
+        .notif-time { font-size: 0.7rem; color: var(--text-muted); }
+        .unread-dot {
+            width: 8px;
+            height: 8px;
+            background: #f9673c;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .flex-fill { flex: 1; }
+        .mini-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+        }
+        .mini-stat {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+        }
+        .mini-stat-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; }
+        .mini-stat-val { font-size: 1.2rem; font-weight: 700; color: var(--primary); }
+        .mini-stat-sub { font-size: 0.65rem; color: var(--text-muted); }
+        .activity-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 6px 0;
+        }
+        .activity-dot {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 0.65rem;
+            flex-shrink: 0;
+        }
+        .activity-dot.orange { background: #f9673c; }
+        .activity-dot.green { background: #27ae60; }
+        .activity-dot.blue { background: #2980b9; }
+        .activity-text { font-size: 0.8rem; }
+        .activity-time { font-size: 0.65rem; color: var(--text-muted); }
+        /* Management Buttons */
+        .mgmt-btn {
+            background: var(--accent);
+            color: #222;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-weight: 500;
+            font-size: 0.8rem;
+            transition: 0.3s;
+            text-decoration: none;
+            display: inline-block;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+        .mgmt-btn:hover {
+            background: #e0a800;
+            color: #111;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(248,182,0,0.3);
+        }
+        @@media (max-width: 768px) {
+            .kpi-card { flex-direction: column; text-align: center; }
+            .mini-stats { grid-template-columns: 1fr 1fr; }
+            .donut-wrap { flex-direction: column; }
+        }
+</style>
+}
+<!-- Banner -->
+<section class="about-banner relative">
+    <div class="overlay overlay-bg"></div>
+    <div class="container">
+        <div class="row d-flex align-items-center justify-content-center">
+            <div class="about-content col-lg-12">
+                <h1 class="text-white">Dashboard</h1>
+                <p class="text-white link-nav">
+                    <a href="#">Home</a>
+                    <span class="lnr lnr-arrow-right"></span>
+                    <a href="#">Dashboard</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- Dashboard Content -->
+<section class="section-gap" style="padding-top:36px;">
+    <div class="container">
+        <!-- ── Management Buttons Row ── -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card" style="padding:15px 20px; background:#f8f9fa;">
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+                        <span class="font-weight-bold mr-2">Manage:</span>
+                        <a href="/admin/flight/index" class="mgmt-btn"><i class="fas fa-plane"></i> Flights</a>
+                        <a href="/admin/airport/index" class="mgmt-btn"><i class="fas fa-map-marker-alt"></i> Airports</a>
+                        <a href="/admin/aircraft/aircraftindex" class="mgmt-btn"><i class="fas fa-fighter-jet"></i> Aircraft</a>
+                        <a href="/admin/discount/index" class="mgmt-btn"><i class="fas fa-percent"></i> Discounts</a>
+                        <a href="/admin/booking/index" class="mgmt-btn"><i class="fas fa-ticket-alt"></i> Bookings</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- ── KPI Row ── -->
+        <div class="row mb-4">
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="kpi-card">
+                    <div class="kpi-icon orange"><i class="fa fa-ticket"></i></div>
+                    <div>
+                        <div class="kpi-label">Total Bookings</div>
+                        <div class="kpi-value">@totalBookings.ToString("N0")</div>
+                        <div class="kpi-delta up"><i class="fa fa-arrow-up"></i> +8.4% this month</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="kpi-card">
+                    <div class="kpi-icon green"><i class="fa fa-dollar"></i></div>
+                    <div>
+                        <div class="kpi-label">Revenue</div>
+                        <div class="kpi-value">$@totalRevenue.ToString("N0")</div>
+                        <div class="kpi-delta up"><i class="fa fa-arrow-up"></i> +12.1% this month</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="kpi-card">
+                    <div class="kpi-icon blue"><i class="fa fa-plane"></i></div>
+                    <div>
+                        <div class="kpi-label">Active Flights</div>
+                        <div class="kpi-value">@activeFlights</div>
+                        <div class="kpi-delta down"><i class="fa fa-arrow-down"></i> −3 from yesterday</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="kpi-card">
+                    <div class="kpi-icon yellow"><i class="fa fa-users"></i></div>
+                    <div>
+                        <div class="kpi-label">Passengers Today</div>
+                        <div class="kpi-value">@totalPassengersToday.ToString("N0")</div>
+                        <div class="kpi-delta up"><i class="fa fa-arrow-up"></i> +5.7% vs last week</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- ── Revenue Chart + Booking Status Donut ── -->
+        <div class="row mb-4">
+            <div class="col-lg-8 mb-3">
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">Revenue Overview</div>
+                            <div class="card-sub">Monthly booking revenue — @DateTime.UtcNow.Year</div>
+                        </div>
+                        <a class="card-action" href="#">View Report</a>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-area">
+                            <svg viewBox="0 0 560 200" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+                                <defs>
+                                    <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stop-color="#f9673c" stop-opacity="0.22" />
+                                        <stop offset="100%" stop-color="#f9673c" stop-opacity="0" />
+                                    </linearGradient>
+                                </defs>
+                                @{
+                                    var maxValue = chartData.Any() ? chartData.Max(d => d.Total) : 0;
+                                    var scaleY = maxValue > 0 ? (decimal)160 / maxValue : 0;
+                                    var points = chartData.Select((d, i) =>
+                                    {
+                                        var x = i * (chartData.Count - 1 > 0 ? 560 / (chartData.Count - 1) : 0);
+                                        var y = 160 - (double)(d.Total * scaleY);
+                                        return new { x, y, value = d.Total };
+                                    }).ToList();
+                                }
+                                <!-- Grid lines -->
+                                <line x1="0" y1="40" x2="560" y2="40" stroke="#f0f0f0" stroke-width="1" />
+                                <line x1="0" y1="80" x2="560" y2="80" stroke="#f0f0f0" stroke-width="1" />
+                                <line x1="0" y1="120" x2="560" y2="120" stroke="#f0f0f0" stroke-width="1" />
+                                <line x1="0" y1="160" x2="560" y2="160" stroke="#f0f0f0" stroke-width="1" />
+                                @if (points.Any())
+                                {
+                                    <!-- Area path -->
+                                    <path d="M0,@points.First().y
+                                        @foreach (var p in points)
+                                        {
+                                            @: L@p.x,@p.y
+                                        }
+                                        L560,200 L0,200 Z" fill="url(#grad)" />
+                                    <!-- Line -->
+                                    <polyline points="@string.Join(" ", points.Select(p => $"{p.x},{p.y}"))"
+                                              fill="none" stroke="#f9673c" stroke-width="2.5" stroke-linejoin="round" />
+                                    <!-- Data points -->
+                                    @foreach (var p in points)
+                                    {
+                                        <circle cx="@p.x" cy="@p.y" r="3.5" fill="#f9673c" />
+                                    }
+                                    <!-- Month labels -->
+                                    @for (int i = 0; i < chartData.Count; i++)
+                                    {
+                                        var label = chartData[i].Month.ToString("MMM");
+                                        var xPos = points[i].x;
+                                        <text>@label</text>
+                                    }
+                                }
+                                else
+                                {
+                                    <text>No revenue data</text>
+                                }
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 mb-3">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">Booking Status</div>
+                            <div class="card-sub">Distribution this month</div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        @{
+                            var confirmed = statusCounts.GetValueOrDefault(BookingStatus.Confirmed, 0);
+                            var pending = statusCounts.GetValueOrDefault(BookingStatus.Pending, 0);
+                            var cancelled = statusCounts.GetValueOrDefault(BookingStatus.Cancelled, 0);
+                            var refunded = statusCounts.GetValueOrDefault(BookingStatus.Refunded, 0);
+                            var total = confirmed + pending + cancelled + refunded;
+                            decimal pConfirmed = total > 0 ? (confirmed * 100m / total) : 0;
+                            decimal pPending = total > 0 ? (pending * 100m / total) : 0;
+                            decimal pCancelled = total > 0 ? (cancelled * 100m / total) : 0;
+                            decimal pRefunded = total > 0 ? (refunded * 100m / total) : 0;
+                            double circumference = 238.76;
+                            double confirmedDash = (double)(pConfirmed / 100m) * circumference;
+                            double pendingDash = (double)(pPending / 100m) * circumference;
+                            double cancelledDash = (double)(pCancelled / 100m) * circumference;
+                            double refundedDash = (double)(pRefunded / 100m) * circumference;
+                            double offset = 0;
+                        }
+                        <div class="donut-wrap">
+                            <svg class="donut-svg" viewBox="0 0 100 100">
+                                @if (confirmedDash > 0) { <circle cx="50" cy="50" r="38" fill="none" stroke="#27ae60" stroke-width="14" stroke-dasharray="@confirmedDash @circumference" stroke-dashoffset="@(-offset)" transform="rotate(-90 50 50)" /> offset += confirmedDash; }
+                                @if (pendingDash > 0) { <circle cx="50" cy="50" r="38" fill="none" stroke="#f39c12" stroke-width="14" stroke-dasharray="@pendingDash @circumference" stroke-dashoffset="@(-offset)" transform="rotate(-90 50 50)" /> offset += pendingDash; }
+                                @if (cancelledDash > 0) { <circle cx="50" cy="50" r="38" fill="none" stroke="#e74c3c" stroke-width="14" stroke-dasharray="@cancelledDash @circumference" stroke-dashoffset="@(-offset)" transform="rotate(-90 50 50)" /> offset += cancelledDash; }
+                                @if (refundedDash > 0) { <circle cx="50" cy="50" r="38" fill="none" stroke="#2980b9" stroke-width="14" stroke-dasharray="@refundedDash @circumference" stroke-dashoffset="@(-offset)" transform="rotate(-90 50 50)" /> offset += refundedDash; }
+                                <text x="50" y="46" text-anchor="middle" font-size="13" font-weight="700" fill="#1a1a2e" font-family="Poppins,sans-serif">@total</text>
+                                <text x="50" y="57" text-anchor="middle" font-size="7" fill="#888" font-family="Poppins,sans-serif">TOTAL</text>
+                            </svg>
+                            <div class="donut-legend">
+                                <div class="legend-item"><span class="legend-left"><span class="legend-dot" style="background:#27ae60"></span>Confirmed</span><span class="legend-right">@pConfirmed.ToString("F0")% — @confirmed</span></div>
+                                <div class="legend-item"><span class="legend-left"><span class="legend-dot" style="background:#f39c12"></span>Pending</span><span class="legend-right">@pPending.ToString("F0")% — @pending</span></div>
+                                <div class="legend-item"><span class="legend-left"><span class="legend-dot" style="background:#e74c3c"></span>Cancelled</span><span class="legend-right">@pCancelled.ToString("F0")% — @cancelled</span></div>
+                                <div class="legend-item"><span class="legend-left"><span class="legend-dot" style="background:#2980b9"></span>Refunded</span><span class="legend-right">@pRefunded.ToString("F0")% — @refunded</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- ── Recent Bookings Table ── -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">Recent Bookings</div>
+                            <div class="card-sub">Latest transactions across all tenants</div>
+                        </div>
+                        <a class="card-action" href="/admin/booking/index">View All</a>
+                    </div>
+                    <div class="table-wrap">
+                        <table class="dash-table">
+                            <thead>
+                                <tr><th>Booking Ref</th><th>Route</th><th>Aircraft</th><th>Passenger</th><th>Seats</th><th>Payment</th><th>Amount</th><th>Status</th><th>Date</th></tr>
+                            </thead>
+                            <tbody>
+                                @if (recentBookings.Any())
+                                {
+                                    foreach (var b in recentBookings)
+                                    {
+                                        var flight = b.Flight;
+                                        var firstSeat = b.BookingSeats?.FirstOrDefault();
+                                        var passengerName = firstSeat?.PassengerName ?? "N/A";
+                                        var seatCount = b.BookingSeats?.Count ?? 0;
+                                        var seatClass = firstSeat?.FlightSeat?.Seat?.Class.ToString() ?? "Economy";
+                                        var payment = Model.Payments?.FirstOrDefault(p => p.BookingId == b.Id);
+                                        var amount = payment?.Amount ?? b.TotalAmount;
+                                        string paymentBadge = "pill-green";
+                                        string paymentText = "N/A";
+                                        if (payment != null)
+                                        {
+                                            paymentText = payment.Method.ToString();
+                                            paymentBadge = payment.Method switch
+                                            {
+                                                PaymentMethod.CreditCard => "pill-green",
+                                                PaymentMethod.DebitCard => "pill-blue",
+                                                PaymentMethod.Wallet => "pill-yellow",
+                                                PaymentMethod.BankTransfer => "pill-orange",
+                                                _ => "pill-gray"
+                                            };
+                                        }
+                                        string statusBadge = b.Status switch
+                                        {
+                                            BookingStatus.Confirmed => "pill-green",
+                                            BookingStatus.Pending => "pill-yellow",
+                                            BookingStatus.Cancelled => "pill-red",
+                                            BookingStatus.Refunded => "pill-blue",
+                                            _ => "pill-gray"
+                                        };
+                                        <tr>
+                                            <td class="td-bold">@b.BookingRef</td>
+                                            <td>
+                                                <div class="route"><span class="route-code">@flight?.OriginAirport?.IataCode</span><span class="route-arrow"><i class="fa fa-long-arrow-right"></i></span><span class="route-code">@flight?.DestinationAirport?.IataCode</span></div>
+                                            </td>
+                                            <td>@flight?.Aircraft?.Model</td>
+                                            <td>@passengerName</td>
+                                            <td>@seatCount × @seatClass</td>
+                                            <td><span class="badge-pill @paymentBadge">@paymentText</span></td>
+                                            <td class="td-bold">$@amount.ToString("F0")</td>
+                                            <td><span class="badge-pill @statusBadge">@b.Status</span></td>
+                                            <td class="td-muted">@b.BookedAt.ToString("dd MMM yyyy")</td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr><td colspan="9" class="text-center text-muted py-3">No bookings found.</td></tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- ── Top Routes + Notifications + Quick Stats ── -->
+        <div class="row mb-4">
+            <div class="col-lg-4 mb-3">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">Top Routes</div>
+                            <div class="card-sub">By seat occupancy rate</div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        @if (topRoutes.Any())
+                        {
+                            var maxCount = topRoutes.Max(x => x.Count);
+                            <div class="stat-bar-wrap">
+                                @foreach (var route in topRoutes)
+                                {
+                                    var pct = maxCount > 0 ? (route.Count * 100 / maxCount) : 0;
+                                    <div>
+                                        <div class="stat-bar-top"><span>@route.Route</span><span>@route.Count bookings</span></div>
+                                        <div class="stat-bar-track"><div class="stat-bar-fill" style="width:@pct%"></div></div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-muted text-center py-3">No route data available.</p>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 mb-3">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">Notifications</div>
+                            <div class="card-sub">@notifications.Count(n => n.unread) unread alerts</div>
+                        </div>
+                        <a class="card-action" href="#">Mark all read</a>
+                    </div>
+                    <div>
+                        @if (notifications.Any())
+                        {
+                            @foreach (var notif in notifications)
+                            {
+                                <div class="notif-item @(notif.unread ? "unread" : "")">
+                                    <div class="notif-icon @notif.color"><i class="fa @notif.icon"></i></div>
+                                    <div class="flex-fill">
+                                        <div class="notif-text">@Html.Raw(notif.title)</div>
+                                        <div class="notif-time">@notif.time</div>
+                                    </div>
+                                    @if (notif.unread)
+                                    {
+                                        <div class="unread-dot"></div>
+                                    }
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="notif-item"><div class="notif-icon blue"><i class="fa fa-info"></i></div><div class="flex-fill"><div class="notif-text">No new notifications</div></div></div>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 mb-3">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">Quick Stats</div>
+                            <div class="card-sub">System snapshot — today</div>
+                        </div>
+                    </div>
+                    <div class="card-body" style="padding:14px;">
+                        <div class="mini-stats mb-18">
+                            <div class="mini-stat"><div class="mini-stat-label">Airports</div><div class="mini-stat-val">@airportCount</div><div class="mini-stat-sub">Active</div></div>
+                            <div class="mini-stat"><div class="mini-stat-label">Aircraft</div><div class="mini-stat-val">@aircraftCount</div><div class="mini-stat-sub">In fleet</div></div>
+                            <div class="mini-stat"><div class="mini-stat-label">Tenants</div><div class="mini-stat-val">@tenantCount</div><div class="mini-stat-sub">Active</div></div>
+                            <div class="mini-stat"><div class="mini-stat-label">Offers</div><div class="mini-stat-val">24</div><div class="mini-stat-sub">Live</div></div>
+                            <div class="mini-stat"><div class="mini-stat-label">Discounts</div><div class="mini-stat-val">11</div><div class="mini-stat-sub">Active</div></div>
+                            <div class="mini-stat"><div class="mini-stat-label">Policies</div><div class="mini-stat-val">9</div><div class="mini-stat-sub">Enforced</div></div>
+                        </div>
+                        <div style="border-top:1px solid var(--border);padding-top:14px;">
+                            <div class="card-title" style="font-size:13px;margin-bottom:10px;">Booking Logs</div>
+                            @if (recentBookings.Any())
+                            {
+                                var latest = recentBookings.Take(3).ToList();
+                                @for (int i = 0; i < latest.Count; i++)
+                                {
+                                    var b = latest[i];
+                                    var icon = i == 0 ? "fa-edit" : (i == 1 ? "fa-check" : "fa-user");
+                                    var color = i == 0 ? "orange" : (i == 1 ? "green" : "blue");
+                                    var action = i == 0 ? "seat assignment updated" : (i == 1 ? "payment cleared" : "booking created");
+                                    var time = i == 0 ? DateTime.UtcNow.AddMinutes(-18).ToString("hh:mm tt") :
+                                                (i == 1 ? DateTime.UtcNow.AddMinutes(-42).ToString("hh:mm tt") :
+                                                DateTime.UtcNow.AddHours(-2).ToString("hh:mm tt"));
+                                    <div class="activity-item">
+                                        <div class="activity-dot @color"><i class="fa @icon"></i></div>
+                                        <div><div class="activity-text">@b.BookingRef @action</div><div class="activity-time">@time</div></div>
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <div class="activity-item"><div class="activity-dot blue"><i class="fa fa-info"></i></div><div><div class="activity-text">No recent activity</div></div></div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- ── Upcoming Flights Table ── -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">Upcoming Flights Today</div>
+                            <div class="card-sub">Next departures — @DateTime.UtcNow.ToString("dd MMM yyyy")</div>
+                        </div>
+                        <a class="card-action" href="/admin/flight/index">View Schedule</a>
+                    </div>
+                    <div class="table-wrap">
+                        <table class="dash-table">
+                            <thead>
+                                <tr><th>Flight #</th><th>Route</th><th>Aircraft</th><th>Departure</th><th>Arrival</th><th>Seats</th><th>Booked</th><th>Offers</th><th>Status</th></tr>
+                            </thead>
+                            <tbody>
+                                @if (todayFlights.Any())
+                                {
+                                    foreach (var f in todayFlights)
+                                    {
+                                        var totalSeats = f.Aircraft?.TotalSeats ?? 0;
+                                        var bookedSeats = f.Bookings?
+                                            .Where(b => b.Status == BookingStatus.Confirmed)
+                                            .SelectMany(b => b.BookingSeats)
+                                            .Count() ?? 0;
+                                        var occupancyPct = totalSeats > 0 ? (bookedSeats * 100 / totalSeats) : 0;
+                                        string occupancyBadge = occupancyPct >= 85 ? "pill-green" : (occupancyPct >= 60 ? "pill-yellow" : "pill-orange");
+                                        string statusBadge = f.Status switch
+                                        {
+                                            FlightStatus.Scheduled => "pill-blue",
+                                            FlightStatus.Boarding => "pill-orange",
+                                            FlightStatus.Departed => "pill-green",
+                                            FlightStatus.Delayed => "pill-yellow",
+                                            FlightStatus.Cancelled => "pill-red",
+                                            _ => "pill-gray"
+                                        };
+                                        <tr>
+                                            <td class="td-bold">@f.FlightNumber</td>
+                                            <td><div class="route"><span class="route-code">@f.OriginAirport?.IataCode</span><span class="route-arrow"><i class="fa fa-long-arrow-right"></i></span><span class="route-code">@f.DestinationAirport?.IataCode</span></div></td>
+                                            <td>@f.Aircraft?.Model</td>
+                                            <td>@f.DepartureUtc.ToString("hh:mm tt")</td>
+                                            <td>@f.ArrivalUtc.ToString("hh:mm tt")</td>
+                                            <td>@totalSeats</td>
+                                            <td><span class="badge-pill @occupancyBadge">@bookedSeats / @totalSeats</span></td>
+                                            <td>0 active</td>
+                                            <td><span class="badge-pill @statusBadge">@f.Status</span></td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr><td colspan="9" class="text-center text-muted py-3">No flights scheduled for today.</td></tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div><!-- /container -->
+</section>

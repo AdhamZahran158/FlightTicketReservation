@@ -1,4 +1,6 @@
-﻿namespace FlightTicketReservation.Models
+﻿using FlightTicketReservation.Utilities;
+
+namespace FlightTicketReservation.Models
 {
     public class Ticket
     {

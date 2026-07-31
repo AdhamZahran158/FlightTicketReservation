@@ -1,0 +1,182 @@
+@using ZahrawyAirFly.Domain.Entities
+@using ZahrawyAirFly.Domain.Enums
+@model Booking
+@{
+    ViewData["Title"] = "Modify Booking";
+    var userEmail = ViewBag.UserEmail as string ?? "unknown@example.com";
+    var isVerified = ViewBag.IsVerified as bool? ?? false;
+}
+    @section Styles {
+<style> 
+        .card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+        .form-group label {
+            font-weight: 500;
+        }
+        .btn-warning {
+            background: #f8b600;
+            border: none;
+            color: #222;
+        }
+            .btn-warning:hover {
+                background: #e0a800;
+                color: #111;
+            }
+        .code-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #f8b600;
+        }
+        .edit-section {
+            display: @(isVerified ? "block" : "none");
+        }
+        .verify-section {
+            display: @(isVerified ? "none" : "block");
+        }
+        .btn-sm {
+            white-space: nowrap;
+        }
+        .booking-summary {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+            .booking-summary .row {
+                margin-bottom: 6px;
+            }
+            .booking-summary .label {
+                font-weight: 600;
+                color: #555;
+                width: 140px;
+                display: inline-block;
+            }
+</style>
+}
+    <!-- ════════════════ BANNER / BREADCRUMB ════════════════ -->
+    <section class="about-banner relative">
+        <div class="overlay overlay-bg"></div>
+        <div class="container">
+            <div class="row d-flex align-items-center justify-content-center">
+                <div class="about-content col-lg-12">
+                    <h1 class="text-white">Modify Booking</h1>
+                    <p class="text-white link-nav">
+                        <a href="/admin/home">Home</a>
+                        <span class="lnr lnr-arrow-right"></span>
+                        <a href="/admin/booking/index">Bookings</a>
+                        <span class="lnr lnr-arrow-right"></span>
+                        <label>Modify Booking</label>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- ════════════════ MAIN CONTENT ════════════════ -->
+    <section class="section-gap">
+        <div class="container">
+            <h2><i class="fas fa-edit"></i> Modify Booking</h2>
+            <p><strong>Booking Ref:</strong> @Model.BookingRef</p>
+            <hr>
+            @if (TempData["error"] != null)
+            {
+                <div class="alert alert-danger">@TempData["error"]</div>
+            }
+            @if (TempData["success"] != null)
+            {
+                <div class="alert alert-success">@TempData["success"]</div>
+            }
+            <!-- Booking Summary (read‑only) -->
+            <div class="card booking-summary">
+                <h5><i class="fas fa-info-circle"></i> Booking Summary</h5>
+                <div class="row"><span class="label">Flight:</span> <span>@Model.Flight?.FlightNumber (@Model.Flight?.OriginAirport?.IataCode → @Model.Flight?.DestinationAirport?.IataCode)</span></div>
+                <div class="row"><span class="label">Departure:</span> <span>@Model.Flight?.DepartureUtc.ToString("dd MMM yyyy HH:mm")</span></div>
+                <div class="row"><span class="label">Passengers:</span> <span>@Model.BookingSeats?.Count ?? 0</span></div>
+                <div class="row"><span class="label">Seats:</span> <span>@string.Join(", ", Model.BookingSeats?.Select(s => s.FlightSeat?.Seat?.SeatNumber ?? "N/A") ?? new List<string>())</span></div>
+                <div class="row"><span class="label">Total Amount:</span> <span>$@Model.TotalAmount.ToString("F2")</span></div>
+                <div class="row"><span class="label">Status:</span> <span>@Model.Status</span></div>
+            </div>
+            <!-- Verification Section -->
+            <div class="card verify-section">
+                <h5><i class="fas fa-shield-alt"></i> Security Verification</h5>
+                <p>A verification code will be sent to the user's email (<strong>@userEmail</strong>). The admin must enter the code to unlock modifications.</p>
+                <form method="post" action="@Url.Action("SendVerificationCode")" class="form-inline mb-3">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="bookingId" value="@Model.Id" />
+                    <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-envelope"></i> Send Code</button>
+                </form>
+                <hr>
+                <form method="post" action="@Url.Action("VerifyCode")" class="form-inline">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="bookingId" value="@Model.Id" />
+                    <div class="form-group mr-2">
+                        <input type="text" name="code" class="form-control" placeholder="Enter 6‑digit code" maxlength="6" required style="width: 160px;" />
+                    </div>
+                    <button type="submit" class="btn btn-success btn-sm"><i class="fas fa-check"></i> Verify Code</button>
+                </form>
+            </div>
+            <!-- Edit Section (shown only after verification) -->
+            <div class="card edit-section">
+                <h5><i class="fas fa-pen"></i> Edit Booking Details</h5>
+                <form method="post" action="@Url.Action("ModifyBooking")">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="Id" />
+                    <input type="hidden" asp-for="BookingRef" />
+                    <input type="hidden" asp-for="TenantId" />
+                    <input type="hidden" asp-for="FlightId" />
+                    <input type="hidden" asp-for="EncryptedRef" />
+                    <input type="hidden" asp-for="BookedAt" />
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Baggage (kg)</label>
+                                <input asp-for="BaggageKg" class="form-control" />
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Status</label>
+                                <select asp-for="Status" class="form-control">
+                                    @foreach (BookingStatus status in Enum.GetValues(typeof(BookingStatus)))
+                                    {
+                                        <option value="@status">@status</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Total Amount</label>
+                                <input asp-for="TotalAmount" class="form-control" step="0.01" />
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Add more fields as needed -->
+                    <div class="mt-3">
+                        <button type="submit" class="btn btn-warning"><i class="fas fa-save"></i> Save Changes</button>
+                        <a href="@Url.Action("Index")" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+            <div class="mt-3">
+                <a href="@Url.Action("Index")" class="btn btn-secondary">Back to All Bookings</a>
+            </div>
+        </div>
+    </section>
+    <!-- Optional: show verification status message -->
+    @if (isVerified)
+    {
+    }
+@section Scripts {
+<script>
+            document.addEventListener('DOMContentLoaded', function() {
+                document.querySelector('.verify-section').style.display = 'none';
+                document.querySelector('.edit-section').style.display = 'block';
+            });
+        </script>
+}

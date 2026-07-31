@@ -1,0 +1,514 @@
+@using ZahrawyAirFly.Domain.Entities
+@model Aircraft
+    <!-- Bootstrap 4 + Font Awesome -->
+    <!-- Google Fonts -->
+    @section Styles {
+<style>
+.form-container {
+            background: #fff;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 25px;
+        }
+        label {
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        .required:after {
+            content: " *";
+            color: #dc3545;
+        }
+        .form-control, .custom-select {
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            padding: 12px 15px;
+            font-family: 'Poppins', sans-serif;
+        }
+            .form-control:focus, .custom-select:focus {
+                border-color: #f8b600;
+                box-shadow: 0 0 0 0.2rem rgba(248,182,0,0.25);
+            }
+        .primary-btn {
+            background: #f8b600;
+            border: none;
+            padding: 12px 40px;
+            font-weight: 600;
+            border-radius: 30px;
+            color: #222;
+            transition: 0.3s;
+            cursor: pointer;
+        }
+            .primary-btn:hover {
+                background: #e0a800;
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(248,182,0,0.3);
+            }
+        .secondary-btn {
+            background: #6c757d;
+            border: none;
+            padding: 12px 30px;
+            font-weight: 500;
+            border-radius: 30px;
+            color: white;
+            transition: 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+            .secondary-btn:hover {
+                background: #5a6268;
+                color: #fff;
+                text-decoration: none;
+            }
+        .info-text {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+        .seat-preview {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 10px;
+            text-align: center;
+        }
+        .seat-grid-demo {
+            display: inline-block;
+            background: #fff;
+            padding: 10px;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .seat-row-demo {
+            display: flex;
+            margin: 3px 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .seat-demo {
+            width: 30px;
+            height: 30px;
+            margin: 2px;
+            background: #28a745;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: white;
+        }
+        /* Image preview styling */
+        .image-preview {
+            margin-top: 10px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            text-align: center;
+        }
+            .image-preview img {
+                max-width: 200px;
+                max-height: 150px;
+                border-radius: 8px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            }
+        .current-image {
+            border: 2px solid #f8b600;
+            padding: 5px;
+        }
+        .file-input-wrapper input[type="file"] {
+            padding: 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            width: 100%;
+        }
+        .btn-sm-danger {
+            background: #dc3545;
+            border: none;
+            padding: 5px 15px;
+            font-size: 12px;
+            border-radius: 20px;
+            color: white;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+            .btn-sm-danger:hover {
+                background: #c82333;
+            }
+        .btn-sm-secondary {
+            background: #6c757d;
+            border: none;
+            padding: 5px 15px;
+            font-size: 12px;
+            border-radius: 20px;
+            color: white;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+        .alert-custom {
+            border-radius: 8px;
+            padding: 12px 20px;
+            margin-bottom: 20px;
+        }
+        @@media (max-width: 768px) {
+            .form-container {
+                padding: 25px;
+            }
+            .seat-demo {
+                width: 25px;
+                height: 25px;
+                font-size: 8px;
+            }
+        }
+</style>
+}
+    <!-- Banner Area -->
+    <section class="about-banner relative">
+        <div class="overlay overlay-bg"></div>
+        <div class="container">
+            <div class="row d-flex align-items-center justify-content-center">
+                <div class="about-content col-lg-12">
+                    <h1 class="text-white">Edit Aircraft</h1>
+                    <p class="text-white link-nav">
+                        <a href="index.html">Home</a>
+                        <span class="lnr lnr-arrow-right"></span>
+                        <a href="admin/aircraft/aircraftindex">Aircraft Fleet</a>
+                        <span class="lnr lnr-arrow-right"></span>
+                        <a href="#">Edit Aircraft</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Edit Aircraft Form Section -->
+    <section class="section-gap">
+        <div class="container">
+            <div class="row d-flex justify-content-center">
+                <div class="col-lg-8">
+                    <div class="title text-center">
+                        <h1 class="mb-10">Update Aircraft Information</h1>
+                        <p>Modify the details of your aircraft below</p>
+                    </div>
+                </div>
+            </div>
+            <div class="row justify-content-center mt-4">
+                <div class="col-lg-10">
+                    <div class="form-container">
+                        <!-- ASP.NET Core Form - IMPORTANT: enctype="multipart/form-data" for file upload -->
+                        <form asp-area="Admin" asp-controller="Aircraft" asp-action="UpdateAircraft" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data" id="aircraftForm">
+                            @Html.AntiForgeryToken()
+                            <!-- Hidden field for Aircraft ID -->
+                            <input type="hidden" name="Id" id="AircraftId" value="@Model.Id">
+                            <input type="hidden" name="ExistingImagePath" id="ExistingImagePath" value="~/img/Aircrafts/@Model.Img">
+                            <div class="row">
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label class="required">Model</label>
+                                        <input type="text" name="Model" id="Model" class="form-control" value="@Model.Model" placeholder="e.g., Boeing 737-800" required>
+                                        <small class="info-text">Full aircraft model name</small>
+                                    </div>
+                                </div>
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label class="required">Registration Code</label>
+                                        <input type="text" name="RegistrationCode" id="RegistrationCode" class="form-control" value="@Model.RegistrationCode" placeholder="e.g., N123AB" required pattern="[A-Z0-9\-]+" title="Only uppercase letters, numbers and hyphens">
+                                        <small class="info-text">Unique aircraft registration number</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label>Manufacturer</label>
+                                        <input type="text" name="Manufacturer" id="Manufacturer" class="form-control" value="@Model.Manufacturer" placeholder="e.g., Boeing, Airbus, Embraer">
+                                        <small class="info-text">Aircraft manufacturer</small>
+                                    </div>
+                                </div>
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label>Manufacture Date</label>
+                                        <input type="date" name="ManufactureDate" id="ManufactureDate" class="form-control" value="@Model.ManufactureDate?.ToString("yyyy-MM-dd")">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label class="required">Rows</label>
+                                        <input type="number" name="Rows" id="Rows" class="form-control" value="@Model.Rows" placeholder="e.g., 30" min="1" max="100" required>
+                                        <small class="info-text">Number of seat rows</small>
+                                    </div>
+                                </div>
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label class="required">Seats Per Row</label>
+                                        <input type="number" name="SeatsPerRow" id="SeatsPerRow" class="form-control" value="@Model.SeatsPerRow" placeholder="e.g., 6" min="1" max="10" required>
+                                        <small class="info-text">Number of seats in each row (A, B, C, etc.)</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label>Max Range (km)</label>
+                                        <input type="number" name="MaxRangeKm" id="MaxRangeKm" class="form-control" value="@Model.MaxRangeKm" placeholder="e.g., 6850" min="1">
+                                    </div>
+                                </div>
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label>Status</label>
+                                        <select name="IsActive" id="IsActive" class="custom-select">
+                                            <option value="true" selected="@Model.IsActive">Active</option>
+                                            <option value="false" selected="@(!Model.IsActive)">Inactive</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Seat Preview (read-only display) -->
+                            <div class="form-group">
+                                <label>Seat Layout Preview</label>
+                                <div class="seat-preview" id="seatPreview">
+                                    <div class="seat-grid-demo">
+                                        <div class="seat-row-demo" id="previewRow">
+                                            <!-- Dynamic preview will be inserted here -->
+                                        </div>
+                                    </div>
+                                    <div class="mt-2">
+                                        <small class="text-muted">
+                                            <span style="background:#28a745; display:inline-block; width:12px; height:12px; border-radius:2px;"></span> Window seat &nbsp;
+                                            <span style="background:#ffc107; display:inline-block; width:12px; height:12px; border-radius:2px;"></span> Aisle seat
+                                        </small>
+                                    </div>
+                                </div>
+                                <small class="info-text">Total seats: <strong id="totalSeatsDisplay">0</strong> seats</small>
+                            </div>
+                            <!-- Seat Layout JSON (hidden - will be generated automatically) -->
+                            <div class="form-group">
+                                <label>Seat Layout JSON</label>
+                                <textarea name="SeatLayoutJson" id="SeatLayoutJson" class="form-control" rows="3" placeholder="Auto-generated seat layout" readonly style="background:#f8f9fa;">@Model.SeatLayoutJson</textarea>
+                                <small class="info-text">This will be generated automatically based on rows and seats per row</small>
+                            </div>
+                            <!-- Image File Upload with Existing Image Preview -->
+                            <div class="form-group">
+                                <label>Aircraft Image</label>
+                                <div class="file-input-wrapper">
+                                    <input type="file" name="Img" id="ImageFile" class="form-control-file" accept="image/jpeg,image/png,image/jpg,image/webp">
+                                    <small class="info-text">Upload new aircraft image (JPEG, PNG, WebP - Max 5MB). Leave empty to keep current image.</small>
+                                </div>
+                                <!-- Current Image Display -->
+                                <div class="image-preview" id="currentImageContainer">
+                                    <label class="text-muted small">Current Image:</label>
+                                    <div>
+                                        <img id="currentImage" src="~/img/Aircrafts/@Model.Img" alt="Current aircraft image" onerror="this.src='https://placehold.co/200x150?text=No+Image'">
+                                    </div>
+                                    <button type="button" class="btn-sm-danger" id="removeCurrentImageBtn" style="display: none;">Remove Current Image</button>
+                                    <input type="hidden" id="RemoveImageFlag" name="RemoveImageFlag" value="false">
+                                </div>
+                                <!-- New Image Preview (shown when new file selected) -->
+                                <div class="image-preview" id="newImagePreview" style="display:none;">
+                                    <label class="text-muted small">New Image Preview:</label>
+                                    <div>
+                                        <img id="newPreviewImg" src="#" alt="New aircraft preview">
+                                    </div>
+                                    <button type="button" class="btn-sm-secondary" id="cancelNewImageBtn">Cancel New Image</button>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" class="custom-control-input" id="confirmDetails" required>
+                                    <label class="custom-control-label" for="confirmDetails">
+                                        I confirm that all aircraft details are accurate and complete
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="form-group text-center mt-4">
+                                <button type="submit" class="primary-btn">
+                                    <i class="fas fa-save"></i> Update Aircraft
+                                </button>
+                                <a href="aircraft-index.html" class="secondary-btn ml-2">
+                                    <i class="fas fa-times"></i> Cancel
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Minimal JavaScript - Only for seat preview, JSON generation, and image handling -->
+@section Scripts {
+<script>
+        // Minimal JS - For dynamic seat preview, JSON generation, and image handling
+        const rowsInput = document.getElementById('Rows');
+        const seatsPerRowInput = document.getElementById('SeatsPerRow');
+        const totalSeatsDisplay = document.getElementById('totalSeatsDisplay');
+        const seatLayoutJson = document.getElementById('SeatLayoutJson');
+        const previewRow = document.getElementById('previewRow');
+        const imageFileInput = document.getElementById('ImageFile');
+        const currentImageContainer = document.getElementById('currentImageContainer');
+        const newImagePreview = document.getElementById('newImagePreview');
+        const newPreviewImg = document.getElementById('newPreviewImg');
+        const cancelNewImageBtn = document.getElementById('cancelNewImageBtn');
+        const removeCurrentImageBtn = document.getElementById('removeCurrentImageBtn');
+        const removeImageFlag = document.getElementById('RemoveImageFlag');
+        const currentImage = document.getElementById('currentImage');
+        // Generate seat letters (A, B, C, D, E, F, G, H, I, J)
+        function getSeatLetter(index) {
+            return String.fromCharCode(65 + index); // A=65
+        }
+        // Update preview and generate JSON
+        function updateSeatPreview() {
+            let rows = parseInt(rowsInput.value) || 0;
+            let seatsPerRow = parseInt(seatsPerRowInput.value) || 0;
+            if (rows <= 0 || seatsPerRow <= 0) {
+                totalSeatsDisplay.innerText = '0';
+                previewRow.innerHTML = '<div class="text-muted">Enter valid rows and seats per row</div>';
+                return;
+            }
+            const totalSeats = rows * seatsPerRow;
+            totalSeatsDisplay.innerText = totalSeats;
+            // Generate preview (first row only for visual)
+            previewRow.innerHTML = '';
+            for (let i = 0; i < seatsPerRow; i++) {
+                const seatLetter = getSeatLetter(i);
+                const isAisle = (i === 2 || i === seatsPerRow - 3); // Aisle after 3rd seat typically
+                const bgColor = (i === 0 || i === seatsPerRow - 1) ? '#28a745' : (isAisle ? '#ffc107' : '#28a745');
+                previewRow.innerHTML += `<div class="seat-demo" style="background:${bgColor};">${seatLetter}</div>`;
+            }
+            // Generate Seat Layout JSON
+            const seatLayout = [];
+            for (let row = 1; row <= rows; row++) {
+                const rowSeats = [];
+                for (let col = 0; col < seatsPerRow; col++) {
+                    const seatLetter = getSeatLetter(col);
+                    const seatNumber = `${row}${seatLetter}`;
+                    // Determine seat type: Window, Aisle, Middle
+                    let seatType = 'Standard';
+                    if (col === 0 || col === seatsPerRow - 1) seatType = 'Window';
+                    else if (col === 2 || col === seatsPerRow - 3) seatType = 'Aisle';
+                    else seatType = 'Middle';
+                    rowSeats.push({
+                        seatNumber: seatNumber,
+                        seatLetter: seatLetter,
+                        rowNumber: row,
+                        seatType: seatType,
+                        isAvailable: true,
+                        seatClass: 'Economy'
+                    });
+                }
+                seatLayout.push({ rowNumber: row, seats: rowSeats });
+            }
+            seatLayoutJson.value = JSON.stringify(seatLayout, null, 2);
+        }
+        // Handle new image selection preview
+        function handleNewImagePreview() {
+            const file = imageFileInput.files[0];
+            if (file) {
+                // Validate file type
+                const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+                if (!validTypes.includes(file.type)) {
+                    alert('Please upload a valid image file (JPEG, PNG, or WebP)');
+                    imageFileInput.value = '';
+                    newImagePreview.style.display = 'none';
+                    currentImageContainer.style.display = 'block';
+                    return;
+                }
+                // Validate file size (max 5MB)
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('File size must be less than 5MB');
+                    imageFileInput.value = '';
+                    newImagePreview.style.display = 'none';
+                    currentImageContainer.style.display = 'block';
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    newPreviewImg.src = e.target.result;
+                    currentImageContainer.style.display = 'none';
+                    newImagePreview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                newImagePreview.style.display = 'none';
+                currentImageContainer.style.display = 'block';
+            }
+        }
+        // Cancel new image selection (revert to current image)
+        function cancelNewImage() {
+            imageFileInput.value = '';
+            newImagePreview.style.display = 'none';
+            currentImageContainer.style.display = 'block';
+        }
+        // Remove current image functionality
+        function removeCurrentImage() {
+            if (confirm('Are you sure you want to remove the current image? The aircraft will have no image until you upload a new one.')) {
+                removeImageFlag.value = 'true';
+                currentImage.style.display = 'none';
+                removeCurrentImageBtn.style.display = 'none';
+                // Add a placeholder text
+                const placeholderText = document.createElement('div');
+                placeholderText.id = 'noImageText';
+                placeholderText.className = 'text-muted text-center p-3';
+                placeholderText.innerHTML = '<i class="fas fa-image fa-2x"></i><br>No image selected';
+                currentImageContainer.appendChild(placeholderText);
+            }
+        }
+        // Show remove button only if there's an existing image
+        function checkExistingImage() {
+            const currentImageSrc = currentImage ? currentImage.src : '';
+            if (currentImageSrc && !currentImageSrc.includes('placeholder') && !currentImageSrc.includes('No+Image')) {
+                removeCurrentImageBtn.style.display = 'inline-block';
+            }
+        }
+        // Event listeners
+        if (rowsInput) rowsInput.addEventListener('input', updateSeatPreview);
+        if (seatsPerRowInput) seatsPerRowInput.addEventListener('input', updateSeatPreview);
+        if (imageFileInput) imageFileInput.addEventListener('change', handleNewImagePreview);
+        if (cancelNewImageBtn) cancelNewImageBtn.addEventListener('click', cancelNewImage);
+        if (removeCurrentImageBtn) removeCurrentImageBtn.addEventListener('click', removeCurrentImage);
+        // Initialize on page load
+        updateSeatPreview();
+        checkExistingImage();
+        // Form validation before submit
+        document.getElementById('aircraftForm').addEventListener('submit', function(e) {
+            const model = document.getElementById('Model').value.trim();
+            const regCode = document.getElementById('RegistrationCode').value.trim();
+            const rows = parseInt(rowsInput.value);
+            const seatsPerRow = parseInt(seatsPerRowInput.value);
+            if (!model) {
+                e.preventDefault();
+                alert('Please enter the aircraft model');
+                return false;
+            }
+            if (!regCode) {
+                e.preventDefault();
+                alert('Please enter the registration code');
+                return false;
+            }
+            // Validate registration code format
+            const regPattern = /^[A-Z0-9\-]+$/;
+            if (!regPattern.test(regCode)) {
+                e.preventDefault();
+                alert('Registration code can only contain uppercase letters, numbers and hyphens');
+                return false;
+            }
+            if (!rows || rows < 1) {
+                e.preventDefault();
+                alert('Please enter valid number of rows (minimum 1)');
+                return false;
+            }
+            if (!seatsPerRow || seatsPerRow < 1) {
+                e.preventDefault();
+                alert('Please enter valid number of seats per row (minimum 1)');
+                return false;
+            }
+            // Auto-generate SeatLayoutJson if empty
+            if (!seatLayoutJson.value) {
+                updateSeatPreview();
+            }
+            return true;
+        });
+    </script>
+}

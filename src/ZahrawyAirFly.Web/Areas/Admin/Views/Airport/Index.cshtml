@@ -1,0 +1,239 @@
+@using ZahrawyAirFly.Domain.Entities
+@model IEnumerable<Airport>
+    <!-- Bootstrap 4 + Font Awesome -->
+    @section Styles {
+<style>
+        .airport-card { background: #fff; border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.05); transition: 0.25s; margin-bottom: 30px; border: none; }
+        .airport-card:hover { transform: translateY(-5px); box-shadow: 0 20px 30px rgba(0,0,0,0.1); }
+        .card-
+        .airport-code { font-size: 1.8rem; font-weight: 700; color: #1e2756; }
+        .airport-name { font-size: 1.1rem; font-weight: 600; margin-bottom: 10px; }
+        .airport-location { font-size: 0.85rem; color: #777; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+        .airport-location i { width: 20px; color: #f8b600; }
+        .badge-status { padding: 5px 12px; border-radius: 50px; font-size: 0.7rem; font-weight: 600; }
+        .badge-active { background: #d4edda; color: #155724; }
+        .badge-inactive { background: #f8d7da; color: #721c24; }
+        .action-icons i, .action-icons a { font-size: 1.1rem; margin: 0 5px; cursor: pointer; transition: 0.2s; text-decoration: none; }
+        .action-icons .fa-eye { color: #17a2b8; }
+        .action-icons .fa-edit { color: #f8b600; }
+        .action-icons .fa-trash-alt { color: #dc3545; }
+        .action-icons i:hover, .action-icons a:hover { transform: scale(1.1); opacity: 0.8; }
+        .airport-table { background: #fff; border-radius: 12px; overflow-x: auto; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        .airport-table th { background: #f8f9fa; font-weight: 600; color: #1e2756; }
+        .airport-table td { vertical-align: middle; }
+        .filter-bar { background: #fff; border-radius: 50px; padding: 8px 20px; margin-bottom: 40px; }
+        .search-input, .nice-select-custom { border-radius: 40px; border: 1px solid #e0e0e0; padding: 10px 18px; width: 100%; font-family: 'Poppins', sans-serif; }
+        .search-input:focus, .nice-select-custom:focus { border-color: #f8b600; outline: none; }
+        .airport-count-badge { background: #f8b60020; color: #f8b600; padding: 6px 16px; border-radius: 40px; font-size: 0.85rem; font-weight: 600; white-space: nowrap; }
+        .view-toggle { background: #fff; border-radius: 30px; padding: 3px; display: inline-flex; }
+        .view-toggle button { border: none; background: transparent; padding: 6px 18px; border-radius: 30px; cursor: pointer; font-size: 0.85rem; }
+        .view-toggle button.active { background: #f8b600; color: #222; }
+        .primary-btn { background: #f8b600; border: none; padding: 10px 28px; font-weight: 600; border-radius: 30px; color: #222; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; }
+        .primary-btn:hover { background: #e0a800; color: #111; transform: translateY(-2px); }
+        .delete-form { display: inline; }
+        .delete-form button { background: none; border: none; padding: 0; cursor: pointer; font-size: 1.1rem; color: #dc3545; }
+        .delete-form button:hover { transform: scale(1.1); }
+        @@media (max-width: 768px) {    .airport-code { font-size: 1.3rem; } }
+</style>
+}
+<!-- Banner -->
+<section class="about-banner relative">
+    <div class="overlay overlay-bg"></div>
+    <div class="container">
+        <div class="row d-flex align-items-center justify-content-center">
+            <div class="about-content col-lg-12">
+                <h1 class="text-white">Airports Management</h1>
+                <p class="text-white link-nav"><a href="/admin/home/index">Home</a> <span class="lnr lnr-arrow-right"></span> <a>Airports</a></p>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- Main Content -->
+<section class="section-gap">
+    <div class="container">
+        <div class="title text-center mb-4">
+            <h1 class="mb-10">Global Airports Directory</h1>
+            <p>Manage airports, view details, and update airport information</p>
+        </div>
+        <!-- Top Bar: Add Button + Filters + View Toggle -->
+        <div class="row mb-4">
+            <div class="col-12 d-flex justify-content-between align-items-center flex-wrap">
+                <a href="/admin/airport/addAirport" class="primary-btn mb-3 mb-sm-0"><i class="fas fa-plus-circle"></i> Add New Airport</a>
+                <div class="d-flex flex-wrap align-items-center gap-2" style="gap: 12px;">
+                    <div class="view-toggle">
+                        <button id="cardViewBtn" class="active" onclick="setView('card')"><i class="fas fa-th-large"></i> Cards</button>
+                        <button id="tableViewBtn" onclick="setView('table')"><i class="fas fa-table"></i> Table</button>
+                    </div>
+                    <div class="filter-bar d-flex flex-wrap align-items-center" style="background: transparent; padding: 0; gap: 12px;">
+                        <input type="text" id="searchAirport" class="search-input" placeholder="🔍 Search by name, city, code...">
+                        <select id="statusFilter" class="nice-select-custom">
+                            <option value="all">All Status</option>
+                            <option value="true">Active</option>
+                            <option value="false">Inactive</option>
+                        </select>
+                        <select id="countryFilter" class="nice-select-custom">
+                            <option value="all">All Countries</option>
+                        </select>
+                        <span class="airport-count-badge" id="airportCount">0 airports</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- ========== CARDS VIEW (data embedded) ========== -->
+        <div class="row" id="airportCardsView">
+            @foreach(var item in Model)
+            {
+            <div class="col-lg-4 col-md-6 airport-card-item" data-id="@item.Id" data-iata="@item.IataCode" data-name="@item.Name" data-city="@item.City" data-country="@item.Country" data-timezone="@item.Timezone" data-lat="@item.Latitude" data-lng="@item.Longitude" data-active="@item.IsActive">
+                <div class="airport-card h-100"><div class="card-body">
+                    <div class="d-flex justify-content-between"><div><div class="airport-code">@item.IataCode</div><small>@item.IcaoCode</small></div><span class="badge-status badge-active">@(item.IsActive? "Active":"Not Active")</span></div>
+                    <div class="airport-name">@item.Name</div>
+                    <div class="airport-location"><i class="fas fa-city"></i> @item.City</div>
+                    <div class="airport-location"><i class="fas fa-globe"></i> @item.Country</div>
+                    <div class="airport-location"><i class="fas fa-clock"></i> @item.Timezone</div>
+                    <div class="airport-location"><i class="fas fa-map-marker-alt"></i> @item.Longitude, @item.Latitude</div>
+                    <div class="mt-3 d-flex justify-content-end">
+                        <div class="action-icons">
+                            <i class="fas fa-eye" onclick="viewDetails(this)"></i>
+                            <a href="/admin/airport/updateairport?id=@item.Id" class="fas fa-edit"></a>
+                            <form method="post" action="/admin/airport/deleteairport?id=@item.Id" class="delete-form" onsubmit="return confirm('Delete this airport?');">@Html.AntiForgeryToken()<button type="submit" class="fas fa-trash-alt"></button></form>
+                        </div>
+                    </div>
+                </div></div>
+            </div>
+            }
+            <!-- Add more cards here following the same pattern -->
+        </div>
+        <!-- ========== TABLE VIEW (data embedded) ========== -->
+                <div class="airport-table" id="airportTableView" style="display: none;">
+                    <table class="table table-hover">
+                        <thead><tr><th>IATA</th><th>ICAO</th><th>Airport Name</th><th>City</th><th>Country</th><th>Timezone</th><th>Status</th><th>Actions</th></tr></thead>
+                        <tbody id="airportTableBody">
+                            @foreach (var item in Model)
+                            {
+                            <tr data-id="@item.Id" data-name="@item.Name" data-country="@item.Country" data-active="@item.IsActive">
+                                <td><strong>@item.IataCode</strong></td>
+                                <td>@item.IcaoCode</td>
+                                <td>@item.Name</td>
+                                <td>@item.City</td>
+                                <td>@item.Country</td>
+                                <td>@item.Timezone</td>
+                                <td><span class="badge-status badge-active">@(item.IsActive ? "Active" : "Not Active")</span></td>
+                                <td><div class="action-icons"><i class="fas fa-eye" onclick="viewDetails(this)"></i><a href="/admin/airport/updateairport?id=@item.Id" class="fas fa-edit"></a><form method="post" action="/admin/airport/deleteairport?id=@item.Id" class="delete-form" onsubmit="return confirm('Delete this airport?');">@Html.AntiForgeryToken()<button type="submit" class="fas fa-trash-alt"></button></form></div></td>
+                            </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+        <!-- No results message -->
+        <div id="noResultsMsg" class="row justify-content-center mt-5" style="display: none;">
+            <div class="col-lg-8 text-center py-5"><i class="fas fa-map-marker-alt fa-3x" style="color:#ccc;"></i><h4 class="mt-3">No airports found</h4><p>Try adjusting your search or add a new airport.</p></div>
+        </div>
+    </div>
+</section>
+<!-- View Details Modal -->
+<div class="modal fade" id="viewModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+    <div class="modal-header"><h5 class="modal-title">Airport Details</h5><button type="button" class="close" data-dismiss="modal">&times;</button></div>
+    <div class="modal-body" id="viewModalBody"></div>
+    <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button></div>
+</div></div></div>
+@section Scripts {
+<script>
+    // Simplified JS: only filtering, view toggle, and detail modal
+    let currentView = 'card', currentSearch = '', currentStatus = 'all', currentCountry = 'all';
+    function populateCountryFilter() {
+        let countries = new Set();
+        document.querySelectorAll('#airportCardsView .airport-card-item').forEach(c => countries.add(c.getAttribute('data-country')));
+        let select = document.getElementById('countryFilter');
+        let current = select.value;
+        select.innerHTML = '<option value="all">All Countries</option>';
+        [...countries].sort().forEach(c => select.innerHTML += `<option value="${c}">${c}</option>`);
+        if (current !== 'all' && countries.has(current)) select.value = current;
+    }
+    function filterCards() {
+        let search = currentSearch.toLowerCase(), cards = document.querySelectorAll('#airportCardsView .airport-card-item');
+        cards.forEach(card => {
+            let name = card.getAttribute('data-name').toLowerCase(), city = card.getAttribute('data-city').toLowerCase();
+            let country = card.getAttribute('data-country').toLowerCase(), iata = card.getAttribute('data-iata').toLowerCase();
+            let active = card.getAttribute('data-active') === 'true';
+            let matchSearch = !search || name.includes(search) || city.includes(search) || country.includes(search) || iata.includes(search);
+            let matchStatus = currentStatus === 'all' || (currentStatus === 'true' && active) || (currentStatus === 'false' && !active);
+            let matchCountry = currentCountry === 'all' || card.getAttribute('data-country') === currentCountry;
+            card.style.display = (matchSearch && matchStatus && matchCountry) ? '' : 'none';
+        });
+    }
+    function filterTableRows() {
+        let search = currentSearch.toLowerCase(), rows = document.querySelectorAll('#airportTableBody tr');
+        rows.forEach(row => {
+            let name = row.getAttribute('data-name').toLowerCase(), cells = row.cells;
+            let city = cells[3]?.innerText.toLowerCase() || '', country = row.getAttribute('data-country').toLowerCase();
+            let iata = cells[0]?.innerText.toLowerCase() || '', active = row.getAttribute('data-active') === 'true';
+            let matchSearch = !search || name.includes(search) || city.includes(search) || country.includes(search) || iata.includes(search);
+            let matchStatus = currentStatus === 'all' || (currentStatus === 'true' && active) || (currentStatus === 'false' && !active);
+            let matchCountry = currentCountry === 'all' || row.getAttribute('data-country') === currentCountry;
+            row.style.display = (matchSearch && matchStatus && matchCountry) ? '' : 'none';
+        });
+    }
+    function updateCountAndNoResults() {
+        let visible = currentView === 'card' ? [...document.querySelectorAll('#airportCardsView .airport-card-item')].filter(c => c.style.display !== 'none').length
+            : [...document.querySelectorAll('#airportTableBody tr')].filter(r => r.style.display !== 'none').length;
+        document.getElementById('airportCount').innerText = `${visible} airport${visible !== 1 ? 's' : ''}`;
+        document.getElementById('noResultsMsg').style.display = visible === 0 ? 'flex' : 'none';
+    }
+    function refresh() { if (currentView === 'card') filterCards(); else filterTableRows(); updateCountAndNoResults(); }
+    function setView(view) {
+        currentView = view;
+        document.getElementById('airportCardsView').style.display = view === 'card' ? 'flex' : 'none';
+        document.getElementById('airportTableView').style.display = view === 'table' ? 'block' : 'none';
+        document.getElementById('cardViewBtn').classList.toggle('active', view === 'card');
+        document.getElementById('tableViewBtn').classList.toggle('active', view === 'table');
+        refresh();
+    }
+    function viewDetails(element) {
+        let container = element.closest('.airport-card-item, tr');
+        if (!container) return;
+        let iata, icao, name, city, country, tz, coords, status, statusClass;
+        if (container.classList.contains('airport-card-item')) {
+            iata = container.getAttribute('data-iata');
+            icao = container.querySelector('small')?.innerText || 'N/A';
+            name = container.getAttribute('data-name');
+            city = container.getAttribute('data-city');
+            country = container.getAttribute('data-country');
+            tz = container.getAttribute('data-timezone');
+            coords = `${container.getAttribute('data-lat')}, ${container.getAttribute('data-lng')}`;
+            status = container.getAttribute('data-active') === 'true' ? 'Active' : 'Inactive';
+            statusClass = container.getAttribute('data-active') === 'true' ? 'badge-active' : 'badge-inactive';
+        } else {
+            let cells = container.cells;
+            iata = cells[0].innerText.trim();
+            icao = cells[1].innerText.trim();
+            name = cells[2].innerText.trim();
+            city = cells[3].innerText.trim();
+            country = cells[4].innerText.trim();
+            tz = cells[5].innerText.trim();
+            coords = 'Not provided';
+            status = cells[6].innerText.trim();
+            statusClass = container.getAttribute('data-active') === 'true' ? 'badge-active' : 'badge-inactive';
+        }
+        document.getElementById('viewModalBody').innerHTML = `
+            <div class="text-center mb-3"><div class="airport-code" style="font-size:2.5rem;">${escapeHtml(iata)}</div><small>${escapeHtml(icao)}</small></div>
+            <ul class="list-unstyled">
+                <li><strong><i class="fas fa-building"></i> Name:</strong> ${escapeHtml(name)}</li>
+                <li class="mt-2"><strong><i class="fas fa-city"></i> City:</strong> ${escapeHtml(city)}</li>
+                <li class="mt-2"><strong><i class="fas fa-globe"></i> Country:</strong> ${escapeHtml(country)}</li>
+                <li class="mt-2"><strong><i class="fas fa-clock"></i> Timezone:</strong> ${escapeHtml(tz)}</li>
+                <li class="mt-2"><strong><i class="fas fa-map-marker-alt"></i> Coordinates:</strong> ${escapeHtml(coords)}</li>
+                <li class="mt-2"><strong><i class="fas fa-toggle-on"></i> Status:</strong> <span class="badge-status ${statusClass}">${escapeHtml(status)}</span></li>
+            </ul>`;
+        $('#viewModal').modal('show');
+    }
+    function escapeHtml(s) { return String(s).replace(/[&<>]/g, function(m){if(m==='&')return '&amp;';if(m==='<')return '&lt;';if(m==='>')return '&gt;';return m;}); }
+    // Event listeners
+    document.getElementById('searchAirport').addEventListener('input', e => { currentSearch = e.target.value; refresh(); });
+    document.getElementById('statusFilter').addEventListener('change', e => { currentStatus = e.target.value; refresh(); });
+    document.getElementById('countryFilter').addEventListener('change', e => { currentCountry = e.target.value; refresh(); });
+    populateCountryFilter();
+    refresh();
+    window.setView = setView;
+    window.viewDetails = viewDetails;
+</script>
+}

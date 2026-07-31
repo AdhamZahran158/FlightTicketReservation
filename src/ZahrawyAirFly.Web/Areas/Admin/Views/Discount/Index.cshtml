@@ -1,0 +1,438 @@
+@using ZahrawyAirFly.Domain.Entities
+@model IEnumerable<Discount>
+    @section Styles {
+<style>
+        .discount-card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+            transition: 0.25s;
+            margin-bottom: 30px;
+            border: none;
+        }
+            .discount-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 20px 30px rgba(0,0,0,0.1);
+            }
+        .card-
+        .discount-code {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1e2756;
+            font-family: monospace;
+        }
+        .badge-status {
+            padding: 5px 12px;
+            border-radius: 50px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+        .badge-active {
+            background: #d4edda;
+            color: #155724;
+        }
+        .badge-inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .badge-percent {
+            background: #cce5ff;
+            color: #004085;
+        }
+        .badge-fixed {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        .action-icons i, .action-icons a {
+            font-size: 1.1rem;
+            margin: 0 5px;
+            cursor: pointer;
+            transition: 0.2s;
+            text-decoration: none;
+        }
+        .action-icons .fa-eye {
+            color: #17a2b8;
+        }
+        .action-icons .fa-edit {
+            color: #f8b600;
+        }
+        .action-icons .fa-trash-alt {
+            color: #dc3545;
+        }
+        .action-icons i:hover, .action-icons a:hover {
+            transform: scale(1.1);
+            opacity: 0.8;
+        }
+        .discount-table {
+            background: #fff;
+            border-radius: 12px;
+            overflow-x: auto;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+            .discount-table th {
+                background: #f8f9fa;
+                font-weight: 600;
+                color: #1e2756;
+            }
+            .discount-table td {
+                vertical-align: middle;
+            }
+        .filter-bar {
+            background: #fff;
+            border-radius: 50px;
+            padding: 8px 20px;
+            margin-bottom: 40px;
+        }
+        .search-input, .nice-select-custom {
+            border-radius: 40px;
+            border: 1px solid #e0e0e0;
+            padding: 10px 18px;
+            width: 100%;
+            font-family: 'Poppins', sans-serif;
+        }
+            .search-input:focus, .nice-select-custom:focus {
+                border-color: #f8b600;
+                outline: none;
+            }
+        .discount-count-badge {
+            background: #f8b60020;
+            color: #f8b600;
+            padding: 6px 16px;
+            border-radius: 40px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .view-toggle {
+            background: #fff;
+            border-radius: 30px;
+            padding: 3px;
+            display: inline-flex;
+        }
+            .view-toggle button {
+                border: none;
+                background: transparent;
+                padding: 6px 18px;
+                border-radius: 30px;
+                cursor: pointer;
+                font-size: 0.85rem;
+            }
+                .view-toggle button.active {
+                    background: #f8b600;
+                    color: #222;
+                }
+        .primary-btn {
+            background: #f8b600;
+            border: none;
+            padding: 10px 28px;
+            font-weight: 600;
+            border-radius: 30px;
+            color: #222;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+            .primary-btn:hover {
+                background: #e0a800;
+                color: #111;
+                transform: translateY(-2px);
+            }
+        .delete-form {
+            display: inline;
+            margin: 0;
+            padding: 0;
+        }
+            .delete-form button {
+                background: none;
+                border: none;
+                padding: 0;
+                cursor: pointer;
+                font-size: 1.1rem;
+                color: #dc3545;
+            }
+                .delete-form button:hover {
+                    transform: scale(1.1);
+                }
+        .modal-header {
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .modal-footer {
+            border-top: 1px solid #f0f0f0;
+        }
+        .info-text {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+        @@media (max-width: 768px) {
+            .discount-code {
+                font-size: 1.2rem;
+            }
+        }
+</style>
+}
+    <!-- Banner -->
+    <section class="about-banner relative">
+        <div class="overlay overlay-bg"></div>
+        <div class="container">
+            <div class="row d-flex align-items-center justify-content-center">
+                <div class="about-content col-lg-12">
+                    <h1 class="text-white">Discount Management</h1>
+                    <p class="text-white link-nav"><a href="/admin/home/index">Home</a> <span class="lnr lnr-arrow-right"></span> <a>Discounts</a></p>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Main Content -->
+    <section class="section-gap">
+        <div class="container">
+            <div class="title text-center mb-4">
+                <h1 class="mb-10">Discount Codes</h1>
+                <p>Manage promotional discounts, view usage, and update discount rules</p>
+            </div>
+            <!-- Top Bar: Add Button + Filters + View Toggle -->
+            <div class="row mb-4">
+                <div class="col-12 d-flex justify-content-between align-items-center flex-wrap">
+                    <a href="/admin/discount/adddiscount" class="primary-btn mb-3 mb-sm-0"><i class="fas fa-plus-circle"></i> Add New Discount</a>
+                    <div class="d-flex flex-wrap align-items-center gap-2" style="gap: 12px;">
+                        <div class="view-toggle">
+                            <button id="cardViewBtn" class="active" onclick="setView('card')"><i class="fas fa-th-large"></i> Cards</button>
+                            <button id="tableViewBtn" onclick="setView('table')"><i class="fas fa-table"></i> Table</button>
+                        </div>
+                        <div class="filter-bar d-flex flex-wrap align-items-center" style="background: transparent; padding: 0; gap: 12px;">
+                            <input type="text" id="searchDiscount" class="search-input" placeholder="🔍 Search by code, description...">
+                            <select id="statusFilter" class="nice-select-custom">
+                                <option value="all">All Status</option>
+                                <option value="true">Active</option>
+                                <option value="false">Inactive</option>
+                            </select>
+                            <select id="typeFilter" class="nice-select-custom">
+                                <option value="all">All Types</option>
+                                <option value="true">Percentage</option>
+                                <option value="false">Fixed Amount</option>
+                            </select>
+                            <span class="discount-count-badge" id="discountCount">0 discounts</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- ========== CARDS VIEW ========== -->
+            <div class="row" id="discountCardsView">
+                @foreach (var discount in Model)
+                {
+                    <div class="col-lg-4 col-md-6 discount-card-item" data-id="@discount.Id"
+                         data-code="@discount.Code"
+                         data-description="@discount.Description"
+                         data-value="@discount.Value"
+                         data-ispercentage="@discount.IsPercentage"
+                         data-minamount="@discount.MinBookingAmount"
+                         data-validfrom="@discount.ValidFrom.ToString("yyyy-MM-ddTHH:mm:ss")"
+                         data-validuntil="@discount.ValidUntil.ToString("yyyy-MM-ddTHH:mm:ss")"
+                         data-maxuses="@discount.MaxUses"
+                         data-timesused="@discount.TimesUsed"
+                         data-active="@discount.IsActive">
+                        <div class="discount-card h-100">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div class="discount-code">@discount.Code</div>
+                                    <div>
+                                        <span class="badge-status @(discount.IsActive ? "badge-active" : "badge-inactive")">
+                                            @(discount.IsActive ? "Active" : "Inactive")
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="mt-2 mb-2">
+                                    <span class="badge-status @(discount.IsPercentage ? "badge-percent" : "badge-fixed")">
+                                        @(discount.IsPercentage ? $"{discount.Value}% OFF" : $"${discount.Value:F2} OFF")
+                                    </span>
+                                </div>
+                                <p class="text-muted small mt-2">@discount.Description</p>
+                                <hr class="my-2">
+                                <div class="airport-location"><i class="fas fa-dollar-sign"></i> Min. booking: $@discount.MinBookingAmount.ToString("F2")</div>
+                                <div class="airport-location"><i class="fas fa-calendar-alt"></i> Valid: @discount.ValidFrom.ToString("dd MMM yyyy") → @discount.ValidUntil.ToString("dd MMM yyyy")</div>
+                                <div class="airport-location"><i class="fas fa-ticket-alt"></i> Used: @discount.TimesUsed / @(discount.MaxUses == 0 ? "∞" : discount.MaxUses.ToString())</div>
+                                <div class="mt-3 d-flex justify-content-end">
+                                    <div class="action-icons">
+                                        <i class="fas fa-eye" onclick="viewDetails(this)"></i>
+                                        <a href="/admin/discount/updatediscount?id=@discount.Id" class="fas fa-edit"></a>
+                                        <form method="post" action="/admin/discount/deletediscount?id=@discount.Id" class="delete-form" onsubmit="return confirm('Delete this discount?');">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="fas fa-trash-alt"></button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+            <!-- ========== TABLE VIEW ========== -->
+            <div class="discount-table" id="discountTableView" style="display: none;">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Description</th>
+                            <th>Value</th>
+                            <th>Type</th>
+                            <th>Min. Booking</th>
+                            <th>Valid From</th>
+                            <th>Valid Until</th>
+                            <th>Uses</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="discountTableBody">
+                        @foreach (var discount in Model)
+                        {
+                            <tr data-id="@discount.Id"
+                                data-code="@discount.Code"
+                                data-description="@discount.Description"
+                                data-value="@discount.Value"
+                                data-ispercentage="@discount.IsPercentage"
+                                data-minamount="@discount.MinBookingAmount"
+                                data-validfrom="@discount.ValidFrom.ToString("yyyy-MM-ddTHH:mm:ss")"
+                                data-validuntil="@discount.ValidUntil.ToString("yyyy-MM-ddTHH:mm:ss")"
+                                data-maxuses="@discount.MaxUses"
+                                data-timesused="@discount.TimesUsed"
+                                data-active="@discount.IsActive">
+                                <td><strong>@discount.Code</strong></td>
+                                <td>@discount.Description</td>
+                                <td>@(discount.IsPercentage ? $"{discount.Value}%" : $"${discount.Value:F2}")</td>
+                                <td>@(discount.IsPercentage ? "Percentage" : "Fixed")</td>
+                                <td>$@discount.MinBookingAmount.ToString("F2")</td>
+                                <td>@discount.ValidFrom.ToString("dd MMM yyyy")</td>
+                                <td>@discount.ValidUntil.ToString("dd MMM yyyy")</td>
+                                <td>@discount.TimesUsed / @(discount.MaxUses == 0 ? "∞" : discount.MaxUses.ToString())</td>
+                                <td><span class="badge-status @(discount.IsActive ? "badge-active" : "badge-inactive")">@(discount.IsActive ? "Active" : "Inactive")</span></td>
+                                <td>
+                                    <div class="action-icons">
+                                        <i class="fas fa-eye" onclick="viewDetails(this)"></i>
+                                        <a href="/admin/discount/updatediscount/@discount.Id" class="fas fa-edit"></a>
+                                        <form method="post" action="/admin/discount/deletediscount/@discount.Id" class="delete-form" onsubmit="return confirm('Delete this discount?');">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="fas fa-trash-alt"></button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <!-- No Results -->
+            <div id="noResultsMsg" class="row justify-content-center mt-5" style="display: none;">
+                <div class="col-lg-8 text-center py-5">
+                    <i class="fas fa-ticket-alt fa-3x" style="color:#ccc;"></i>
+                    <h4 class="mt-3">No discounts found</h4>
+                    <p>Try adjusting your search or add a new discount.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- View Details Modal -->
+    <div class="modal fade" id="viewModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">Discount Details</h5><button type="button" class="close" data-dismiss="modal">&times;</button></div>
+                <div class="modal-body" id="viewModalBody"></div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button></div>
+            </div>
+        </div>
+    </div>
+@section Scripts {
+<script>
+        // Simplified filtering and view toggle
+        let currentView = 'card', currentSearch = '', currentStatus = 'all', currentType = 'all';
+        function filterCards() {
+            let search = currentSearch.toLowerCase();
+            let cards = document.querySelectorAll('#discountCardsView .discount-card-item');
+            cards.forEach(card => {
+                let code = card.getAttribute('data-code').toLowerCase();
+                let desc = card.getAttribute('data-description').toLowerCase();
+                let active = card.getAttribute('data-active') === 'true';
+                let isPercent = card.getAttribute('data-ispercentage') === 'true';
+                let matchSearch = !search || code.includes(search) || desc.includes(search);
+                let matchStatus = currentStatus === 'all' || (currentStatus === 'true' && active) || (currentStatus === 'false' && !active);
+                let matchType = currentType === 'all' || (currentType === 'true' && isPercent) || (currentType === 'false' && !isPercent);
+                card.style.display = (matchSearch && matchStatus && matchType) ? '' : 'none';
+            });
+        }
+        function filterTableRows() {
+            let search = currentSearch.toLowerCase();
+            let rows = document.querySelectorAll('#discountTableBody tr');
+            rows.forEach(row => {
+                let code = row.getAttribute('data-code').toLowerCase();
+                let desc = row.getAttribute('data-description').toLowerCase();
+                let active = row.getAttribute('data-active') === 'true';
+                let isPercent = row.getAttribute('data-ispercentage') === 'true';
+                let matchSearch = !search || code.includes(search) || desc.includes(search);
+                let matchStatus = currentStatus === 'all' || (currentStatus === 'true' && active) || (currentStatus === 'false' && !active);
+                let matchType = currentType === 'all' || (currentType === 'true' && isPercent) || (currentType === 'false' && !isPercent);
+                row.style.display = (matchSearch && matchStatus && matchType) ? '' : 'none';
+            });
+        }
+        function updateCountAndNoResults() {
+            let visible = currentView === 'card'
+                ? [...document.querySelectorAll('#discountCardsView .discount-card-item')].filter(c => c.style.display !== 'none').length
+                : [...document.querySelectorAll('#discountTableBody tr')].filter(r => r.style.display !== 'none').length;
+            document.getElementById('discountCount').innerText = `${visible} discount${visible !== 1 ? 's' : ''}`;
+            document.getElementById('noResultsMsg').style.display = visible === 0 ? 'flex' : 'none';
+        }
+        function refresh() {
+            if (currentView === 'card') filterCards(); else filterTableRows();
+            updateCountAndNoResults();
+        }
+        function setView(view) {
+            currentView = view;
+            document.getElementById('discountCardsView').style.display = view === 'card' ? 'flex' : 'none';
+            document.getElementById('discountTableView').style.display = view === 'table' ? 'block' : 'none';
+            document.getElementById('cardViewBtn').classList.toggle('active', view === 'card');
+            document.getElementById('tableViewBtn').classList.toggle('active', view === 'table');
+            refresh();
+        }
+        function viewDetails(element) {
+            let container = element.closest('.discount-card-item, tr');
+            if (!container) return;
+            let code = container.getAttribute('data-code');
+            let description = container.getAttribute('data-description');
+            let value = parseFloat(container.getAttribute('data-value'));
+            let isPercent = container.getAttribute('data-ispercentage') === 'true';
+            let minAmount = parseFloat(container.getAttribute('data-minamount'));
+            let validFrom = new Date(container.getAttribute('data-validfrom'));
+            let validUntil = new Date(container.getAttribute('data-validuntil'));
+            let maxUses = parseInt(container.getAttribute('data-maxuses'));
+            let timesUsed = parseInt(container.getAttribute('data-timesused'));
+            let active = container.getAttribute('data-active') === 'true';
+            let valueText = isPercent ? `${value}% off` : `$${value.toFixed(2)} off`;
+            let typeText = isPercent ? 'Percentage' : 'Fixed amount';
+            let validFromStr = validFrom.toLocaleDateString('en-GB', { year:'numeric', month:'short', day:'2-digit' });
+            let validUntilStr = validUntil.toLocaleDateString('en-GB', { year:'numeric', month:'short', day:'2-digit' });
+            let usesText = maxUses === 0 ? `${timesUsed} / ∞` : `${timesUsed} / ${maxUses}`;
+            let statusClass = active ? 'badge-active' : 'badge-inactive';
+            let statusText = active ? 'Active' : 'Inactive';
+            let html = `
+                <ul class="list-unstyled">
+                    <li><strong><i class="fas fa-tag"></i> Code:</strong> ${escapeHtml(code)}</li>
+                    <li class="mt-2"><strong><i class="fas fa-align-left"></i> Description:</strong> ${escapeHtml(description)}</li>
+                    <li class="mt-2"><strong><i class="fas fa-percent"></i> Discount:</strong> ${valueText} (${typeText})</li>
+                    <li class="mt-2"><strong><i class="fas fa-dollar-sign"></i> Minimum Booking:</strong> $${minAmount.toFixed(2)}</li>
+                    <li class="mt-2"><strong><i class="fas fa-calendar-alt"></i> Valid Period:</strong> ${validFromStr} → ${validUntilStr}</li>
+                    <li class="mt-2"><strong><i class="fas fa-ticket-alt"></i> Usage:</strong> ${usesText}</li>
+                    <li class="mt-2"><strong><i class="fas fa-toggle-on"></i> Status:</strong> <span class="badge-status ${statusClass}">${statusText}</span></li>
+                </ul>
+            `;
+            document.getElementById('viewModalBody').innerHTML = html;
+            $('#viewModal').modal('show');
+        }
+        function escapeHtml(s) { return String(s).replace(/[&<>]/g, function(m){if(m==='&')return '&amp;';if(m==='<')return '&lt;';if(m==='>')return '&gt;';return m;}); }
+        document.getElementById('searchDiscount').addEventListener('input', e => { currentSearch = e.target.value; refresh(); });
+        document.getElementById('statusFilter').addEventListener('change', e => { currentStatus = e.target.value; refresh(); });
+        document.getElementById('typeFilter').addEventListener('change', e => { currentType = e.target.value; refresh(); });
+        refresh(); // initial filter
+        window.setView = setView;
+        window.viewDetails = viewDetails;
+    </script>
+}

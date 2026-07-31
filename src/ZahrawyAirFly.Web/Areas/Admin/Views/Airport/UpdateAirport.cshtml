@@ -1,0 +1,488 @@
+@using ZahrawyAirFly.Domain.Entities
+@model Airport
+    <!-- Bootstrap 4 + Font Awesome -->
+    <!-- Google Fonts -->
+    @section Styles {
+<style>
+.form-container {
+            background: #fff;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 25px;
+        }
+        label {
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        .required:after {
+            content: " *";
+            color: #dc3545;
+        }
+        .form-control, .custom-select {
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            padding: 12px 15px;
+            font-family: 'Poppins', sans-serif;
+        }
+            .form-control:focus, .custom-select:focus {
+                border-color: #f8b600;
+                box-shadow: 0 0 0 0.2rem rgba(248,182,0,0.25);
+            }
+        .primary-btn {
+            background: #f8b600;
+            border: none;
+            padding: 12px 40px;
+            font-weight: 600;
+            border-radius: 30px;
+            color: #222;
+            transition: 0.3s;
+            cursor: pointer;
+        }
+            .primary-btn:hover {
+                background: #e0a800;
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(248,182,0,0.3);
+            }
+        .secondary-btn {
+            background: #6c757d;
+            border: none;
+            padding: 12px 30px;
+            font-weight: 500;
+            border-radius: 30px;
+            color: white;
+            transition: 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+            .secondary-btn:hover {
+                background: #5a6268;
+                color: #fff;
+                text-decoration: none;
+            }
+        .danger-btn {
+            background: #dc3545;
+            border: none;
+            padding: 12px 30px;
+            font-weight: 500;
+            border-radius: 30px;
+            color: white;
+            transition: 0.3s;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+            .danger-btn:hover {
+                background: #c82333;
+            }
+        .info-text {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+        .coordinates-row {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 5px;
+        }
+        .icon-input {
+            position: relative;
+        }
+            .icon-input i {
+                position: absolute;
+                left: 15px;
+                top: 50%;
+                transform: translateY(-50%);
+                color: #f8b600;
+            }
+            .icon-input input {
+                padding-left: 40px;
+            }
+        .alert-warning {
+            background: #fff3cd;
+            border: none;
+            border-radius: 10px;
+            color: #856404;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        @@media (max-width: 768px) {
+            .form-container {
+                padding: 25px;
+            }
+        }
+</style>
+}
+    <!-- Banner Area -->
+    <section class="about-banner relative">
+        <div class="overlay overlay-bg"></div>
+        <div class="container">
+            <div class="row d-flex align-items-center justify-content-center">
+                <div class="about-content col-lg-12">
+                    <h1 class="text-white">Edit Airport</h1>
+                    <p class="text-white link-nav">
+                        <a href="/admin/home/index">Home</a>
+                        <span class="lnr lnr-arrow-right"></span>
+                        <a href="/admin/airport/index">Airports</a>
+                        <span class="lnr lnr-arrow-right"></span>
+                        <a href="#">Edit Airport</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Edit Airport Form Section -->
+    <section class="section-gap">
+        <div class="container">
+            <div class="row d-flex justify-content-center">
+                <div class="col-lg-8">
+                    <div class="title text-center">
+                        <h1 class="mb-10">Update Airport Information</h1>
+                        <p>Modify the details of the selected airport below</p>
+                    </div>
+                </div>
+            </div>
+            <div class="row justify-content-center mt-4">
+                <div class="col-lg-10">
+                    <div class="form-container">
+                        <!-- ASP.NET Core Form -->
+                        <form asp-area="Admin" asp-controller="Airport" asp-action="UpdateAirport" method="post" id="airportForm">
+                            @Html.AntiForgeryToken()
+                            <!-- Hidden field for Airport ID -->
+                            <input type="hidden" name="Id" id="AirportId" value="@Model.Id">
+                            <!-- Airport Codes Section -->
+                            <div class="row">
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label class="required">IATA Code</label>
+                                        <div class="icon-input">
+                                            <i class="fas fa-tag"></i>
+                                            <input type="text" name="IataCode" id="IataCode" class="form-control" value="@Model.IataCode" placeholder="e.g., JFK" maxlength="3" required>
+                                        </div>
+                                        <small class="info-text">3-letter IATA airport code (e.g., JFK, LHR, DXB)</small>
+                                    </div>
+                                </div>
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label>ICAO Code</label>
+                                        <div class="icon-input">
+                                            <i class="fas fa-qrcode"></i>
+                                            <input type="text" name="IcaoCode" id="IcaoCode" class="form-control" value="@Model.IcaoCode" placeholder="e.g., KJFK" maxlength="4">
+                                        </div>
+                                        <small class="info-text">4-letter ICAO airport code (optional)</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Airport Name Section -->
+                            <div class="form-group">
+                                <label class="required">Airport Name</label>
+                                <div class="icon-input">
+                                    <i class="fas fa-building"></i>
+                                    <input type="text" name="Name" id="Name" class="form-control" value="@Model.Name" placeholder="e.g., John F. Kennedy International Airport" required>
+                                </div>
+                                <small class="info-text">Full official name of the airport</small>
+                            </div>
+                            <!-- Location Section -->
+                            <div class="row">
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label class="required">City</label>
+                                        <div class="icon-input">
+                                            <i class="fas fa-city"></i>
+                                            <input type="text" name="City" id="City" class="form-control" value="@Model.City" placeholder="e.g., New York" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label class="required">Country</label>
+                                        <div class="icon-input">
+                                            <i class="fas fa-globe"></i>
+                                            <input type="text" name="Country" id="Country" class="form-control" value="@Model.Country" placeholder="e.g., United States" required>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label>Country Code</label>
+                                        <div class="icon-input">
+                                            <i class="fas fa-flag"></i>
+                                            <input type="text" name="CountryCode" id="CountryCode" class="form-control" value="@Model.CountryCode" placeholder="e.g., US" maxlength="2">
+                                        </div>
+                                        <small class="info-text">2-letter country code (ISO 3166-1 alpha-2)</small>
+                                    </div>
+                                </div>
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label>Timezone</label>
+                                        <div class="icon-input">
+                                            <i class="fas fa-clock"></i>
+                                            <input type="text" name="Timezone" id="Timezone" class="form-control" value="@Model.Timezone" placeholder="e.g., America/New_York">
+                                        </div>
+                                        <small class="info-text">IANA timezone database name</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Coordinates Section -->
+                            <div class="form-group">
+                                <label>Geographic Coordinates</label>
+                                <div class="coordinates-row">
+                                    <div class="row">
+                                        <div class="col-lg-6">
+                                            <div class="form-group mb-0">
+                                                <label class="small">Latitude</label>
+                                                <div class="icon-input">
+                                                    <i class="fas fa-arrow-up"></i>
+                                                    <input type="number" step="any" name="Latitude" id="Latitude" class="form-control" value="@Model.Latitude" placeholder="e.g., 40.6413">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-6">
+                                            <div class="form-group mb-0">
+                                                <label class="small">Longitude</label>
+                                                <div class="icon-input">
+                                                    <i class="fas fa-arrow-right"></i>
+                                                    <input type="number" step="any" name="Longitude" id="Longitude" class="form-control" value="@Model.Longitude" placeholder="e.g., -73.7781">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <small class="info-text mt-2 d-block">Decimal degrees (DD) format. Use negative values for West/South.</small>
+                                </div>
+                            </div>
+                            <!-- Status Section -->
+                            <div class="form-group">
+                                <label>Status</label>
+                                <select name="IsActive" id="IsActive" class="custom-select">
+                                    <option value="true" selected="@Model.IsActive">Active</option>
+                                    <option value="false" selected="@(!Model.IsActive)">Inactive</option>
+                                </select>
+                                <small class="info-text">Active airports will appear in search results and bookings</small>
+                            </div>
+                            <!-- Current Status Display -->
+                            <div class="alert alert-warning" id="statusWarning" style="display: none;">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <span id="statusMessage"></span>
+                            </div>
+                            <!-- Confirmation Checkbox -->
+                            <div class="form-group">
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" class="custom-control-input" id="confirmDetails" required>
+                                    <label class="custom-control-label" for="confirmDetails">
+                                        I confirm that the updated airport details are accurate and complete
+                                    </label>
+                                </div>
+                            </div>
+                            <!-- Action Buttons -->
+                            <div class="form-group text-center mt-4">
+                                <button type="submit" class="primary-btn">
+                                    <i class="fas fa-save"></i> Update Airport
+                                </button>
+                                <a href="airports-index.html" class="secondary-btn ml-2">
+                                    <i class="fas fa-times"></i> Cancel
+                                </a>
+                                <button type="button" class="danger-btn ml-2" id="deleteBtn" onclick="confirmDelete()">
+                                    <i class="fas fa-trash-alt"></i> Delete
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <!-- Helpful Tips Section -->
+            <div class="row justify-content-center mt-5">
+                <div class="col-lg-10">
+                    <div class="alert alert-info" style="background: #e8f4fd; border: none; border-radius: 10px;">
+                        <h6><i class="fas fa-info-circle"></i> Airport Code Guidelines:</h6>
+                        <ul class="mb-0 small">
+                            <li><strong>IATA Code:</strong> 3 letters, used for ticketing and flight schedules (e.g., JFK, LHR, CDG)</li>
+                            <li><strong>ICAO Code:</strong> 4 letters, used by air traffic control and pilots (e.g., KJFK, EGLL, LFPG)</li>
+                            <li><strong>Country Code:</strong> 2-letter ISO code (e.g., US, GB, FR, DE, EG, AE)</li>
+                            <li><strong>Timezone:</strong> Use IANA format (e.g., America/New_York, Europe/London, Asia/Dubai)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Delete</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete this airport?</p>
+                    <p class="text-danger mb-0"><small>This action cannot be undone. All associated flights and bookings may be affected.</small></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <form asp-area="Admin" asp-controller="Airport" asp-action="DeleteAirport" asp-route-id="@Model.Id" method="post" style="display: inline;">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" id="deleteAirportId" value="@Model.Id">
+                        <button type="submit" class="btn btn-danger">Delete Airport</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+@section Scripts {
+<script>
+        // Auto-format IATA code to uppercase
+        const iataInput = document.getElementById('IataCode');
+        const icaoInput = document.getElementById('IcaoCode');
+        const countryCodeInput = document.getElementById('CountryCode');
+        if (iataInput) {
+            iataInput.addEventListener('input', function() {
+                this.value = this.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 3);
+            });
+        }
+        if (icaoInput) {
+            icaoInput.addEventListener('input', function() {
+                this.value = this.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4);
+            });
+        }
+        if (countryCodeInput) {
+            countryCodeInput.addEventListener('input', function() {
+                this.value = this.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 2);
+            });
+        }
+        // Capitalize first letter of each word for City and Country
+        const cityInput = document.getElementById('City');
+        const countryInput = document.getElementById('Country');
+        function capitalizeWords(str) {
+            return str.replace(/\b\w/g, function(l) { return l.toUpperCase(); });
+        }
+        if (cityInput) {
+            cityInput.addEventListener('blur', function() {
+                if (this.value) {
+                    this.value = capitalizeWords(this.value);
+                }
+            });
+        }
+        if (countryInput) {
+            countryInput.addEventListener('blur', function() {
+                if (this.value) {
+                    this.value = capitalizeWords(this.value);
+                }
+            });
+        }
+        // Show warning when status changes to Inactive
+        const statusSelect = document.getElementById('IsActive');
+        const statusWarning = document.getElementById('statusWarning');
+        const statusMessage = document.getElementById('statusMessage');
+        if (statusSelect) {
+            statusSelect.addEventListener('change', function() {
+                if (this.value === 'false') {
+                    statusMessage.innerHTML = 'This airport will be marked as INACTIVE. It will not appear in search results or be available for new bookings.';
+                    statusWarning.style.display = 'block';
+                } else {
+                    statusWarning.style.display = 'none';
+                }
+            });
+        }
+        // Form validation before submit
+        document.getElementById('airportForm').addEventListener('submit', function(e) {
+            const iataCode = document.getElementById('IataCode').value.trim();
+            const name = document.getElementById('Name').value.trim();
+            const city = document.getElementById('City').value.trim();
+            const country = document.getElementById('Country').value.trim();
+            // Validate IATA code
+            if (!iataCode) {
+                e.preventDefault();
+                alert('Please enter the IATA code');
+                document.getElementById('IataCode').focus();
+                return false;
+            }
+            if (iataCode.length !== 3) {
+                e.preventDefault();
+                alert('IATA code must be exactly 3 characters');
+                document.getElementById('IataCode').focus();
+                return false;
+            }
+            // Validate airport name
+            if (!name) {
+                e.preventDefault();
+                alert('Please enter the airport name');
+                document.getElementById('Name').focus();
+                return false;
+            }
+            // Validate city
+            if (!city) {
+                e.preventDefault();
+                alert('Please enter the city');
+                document.getElementById('City').focus();
+                return false;
+            }
+            // Validate country
+            if (!country) {
+                e.preventDefault();
+                alert('Please enter the country');
+                document.getElementById('Country').focus();
+                return false;
+            }
+            // Validate ICAO code if provided
+            const icaoCode = document.getElementById('IcaoCode').value.trim();
+            if (icaoCode && icaoCode.length !== 4) {
+                e.preventDefault();
+                alert('ICAO code must be exactly 4 characters (if provided)');
+                document.getElementById('IcaoCode').focus();
+                return false;
+            }
+            // Validate country code if provided
+            const countryCode = document.getElementById('CountryCode').value.trim();
+            if (countryCode && countryCode.length !== 2) {
+                e.preventDefault();
+                alert('Country code must be exactly 2 characters (if provided)');
+                document.getElementById('CountryCode').focus();
+                return false;
+            }
+            // Validate coordinates if provided
+            const latitude = parseFloat(document.getElementById('Latitude').value);
+            const longitude = parseFloat(document.getElementById('Longitude').value);
+            if (document.getElementById('Latitude').value && (latitude < -90 || latitude > 90)) {
+                e.preventDefault();
+                alert('Latitude must be between -90 and 90 degrees');
+                document.getElementById('Latitude').focus();
+                return false;
+            }
+            if (document.getElementById('Longitude').value && (longitude < -180 || longitude > 180)) {
+                e.preventDefault();
+                alert('Longitude must be between -180 and 180 degrees');
+                document.getElementById('Longitude').focus();
+                return false;
+            }
+            return true;
+        });
+        // Delete confirmation function
+        function confirmDelete() {
+            $('#deleteModal').modal('show');
+        }
+        // Make confirmDelete global for onclick
+        window.confirmDelete = confirmDelete;
+    </script>
+}

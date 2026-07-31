@@ -1,0 +1,261 @@
+@model VerifyEmailVM
+<!-- start banner Area -->
+<section class="about-banner relative">
+    <div class="overlay overlay-bg"></div>
+    <div class="container">
+        <div class="row d-flex align-items-center justify-content-center">
+            <div class="about-content col-lg-12">
+                <h1 class="text-white">
+                    Verify Your Email
+                </h1>
+                <p class="text-white link-nav">
+                    <a href="index.html">Home</a>
+                    <span class="lnr lnr-arrow-right"></span>
+                    <a href="signup.html"> Sign Up</a>
+                    <span class="lnr lnr-arrow-right"></span>
+                    <a href="verify-otp.html"> Verify Email</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- End banner Area -->
+<!-- Start OTP Verification Area -->
+<section class="section-gap">
+    <div class="container">
+        <div class="row d-flex justify-content-center">
+            <div class="menu-content pb-40 col-lg-8">
+                <div class="title text-center">
+                    <h1 class="mb-10">Email Verification</h1>
+                    <p>Please enter the 6-digit verification code sent to your email</p>
+                </div>
+            </div>
+        </div>
+        <div class="row justify-content-center">
+            <div class="col-lg-6">
+                <div class="otp-form">
+                    <form asp-area="Identity" asp-controller="Account" asp-action="VerifyEmail" method="post" class="form" id="otpForm">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="Email" />
+                        <input type="hidden" name="OTP" id="otpCode" value="">
+                        <div class="form-group text-center">
+                            <label class="mb-4">Verification Code</label>
+                            <div class="otp-container">
+                                <input type="text" class="otp-input" id="otp1" maxlength="1" pattern="[0-9]" inputmode="numeric" autofocus>
+                                <input type="text" class="otp-input" id="otp2" maxlength="1" pattern="[0-9]" inputmode="numeric">
+                                <input type="text" class="otp-input" id="otp3" maxlength="1" pattern="[0-9]" inputmode="numeric">
+                                <input type="text" class="otp-input" id="otp4" maxlength="1" pattern="[0-9]" inputmode="numeric">
+                                <input type="text" class="otp-input" id="otp5" maxlength="1" pattern="[0-9]" inputmode="numeric">
+                                <input type="text" class="otp-input" id="otp6" maxlength="1" pattern="[0-9]" inputmode="numeric">
+                            </div>
+                            <small class="form-text text-muted mt-3">Enter the 6-digit code sent to your email</small>
+                        </div>
+                        <div class="form-group text-center mt-4">
+                            <button type="submit" class="primary-btn text-uppercase">Verify Email</button>
+                        </div>
+                        <div class="text-center mt-3">
+                            <p class="mb-0">Didn't receive the code? <a asp-action="VerifyEmail" asp-controller="Account" asp-area="Identity" class="resend-link">Resend Code</a></p>
+                        </div>
+                        <div class="text-center mt-2">
+                            <p class="mb-0">
+                                <a asp-action="Login" class="back-to-login">
+                                    <i class="fa fa-arrow-left"></i> Back to Sign In
+                                </a>
+                            </p>
+                        </div>
+                    </form>
+                    <!-- Success Message -->
+                    <div class="success-message text-center mt-4" style="display: none;">
+                        <div class="alert alert-success">
+                            <i class="fa fa-check-circle"></i>
+                            <h5 class="mt-2">Email Verified Successfully!</h5>
+                            <p class="mb-0">Your email has been verified. You can now <a asp-action="Login">sign in</a> to your account.</p>
+                        </div>
+                    </div>
+                    <!-- Error Message -->
+                    <div class="error-message text-center mt-4" style="display: none;">
+                        <div class="alert alert-danger">
+                            <i class="fa fa-exclamation-circle"></i>
+                            <p class="mb-0 mt-2">Invalid verification code. Please try again.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- End OTP Verification Area -->
+@section Styles {
+<style>
+.otp-form {
+        background: #fff;
+        padding: 40px;
+        border-radius: 10px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+        .otp-form .form-group {
+            margin-bottom: 25px;
+        }
+        .otp-form label {
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+        .otp-form .primary-btn {
+            padding: 12px 40px;
+            font-size: 14px;
+            min-width: 200px;
+        }
+        .otp-form .resend-link {
+            color: #f8b600;
+            cursor: pointer;
+        }
+            .otp-form .resend-link:hover {
+                text-decoration: underline;
+            }
+        .otp-form .back-to-login {
+            color: #f8b600;
+            font-size: 14px;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+            .otp-form .back-to-login i {
+                margin-right: 5px;
+            }
+            .otp-form .back-to-login:hover {
+                color: #f8b600;
+                text-decoration: underline;
+            }
+    .otp-container {
+        display: flex;
+        justify-content: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+    .otp-input {
+        width: 60px;
+        height: 60px;
+        text-align: center;
+        font-size: 24px;
+        font-weight: 600;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        background: #fff;
+        transition: all 0.3s ease;
+    }
+        .otp-input:focus {
+            border-color: #f8b600;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(248, 182, 0, 0.1);
+        }
+        .otp-input:hover {
+            border-color: #f8b600;
+        }
+    .otp-form .alert-success {
+        background-color: #d4edda;
+        border-color: #c3e6cb;
+        color: #155724;
+        padding: 20px;
+        border-radius: 5px;
+    }
+        .otp-form .alert-success i {
+            font-size: 48px;
+        }
+        .otp-form .alert-success a {
+            color: #155724;
+            text-decoration: underline;
+        }
+    .otp-form .alert-danger {
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+        color: #721c24;
+        padding: 20px;
+        border-radius: 5px;
+    }
+        .otp-form .alert-danger i {
+            font-size: 48px;
+        }
+    @@media (max-width: 480px) {
+        .otp-input {
+            width: 45px;
+            height: 45px;
+            font-size: 20px;
+        }
+        .otp-container {
+            gap: 8px;
+        }
+    }
+</style>
+}
+@section Scripts {
+<script>
+    const otpInputs = document.querySelectorAll('.otp-input');
+    const otpCodeField = document.getElementById('otpCode');
+    const otpForm = document.getElementById('otpForm');
+    // Auto-tab functionality
+    otpInputs.forEach((input, index) => {
+        input.addEventListener('input', function(e) {
+            // Allow only numbers
+            this.value = this.value.replace(/[^0-9]/g, '');
+            // Move to next input if current has value
+            if (this.value.length === 1 && index < otpInputs.length - 1) {
+                otpInputs[index + 1].focus();
+            }
+            // Update hidden field with combined OTP
+            updateOtpCode();
+        });
+        input.addEventListener('keydown', function(e) {
+            // Handle backspace
+            if (e.key === 'Backspace') {
+                if (this.value.length === 0 && index > 0) {
+                    otpInputs[index - 1].focus();
+                }
+            }
+        });
+        // Handle paste event
+        input.addEventListener('paste', function(e) {
+            e.preventDefault();
+            const pastedData = (e.clipboardData || window.clipboardData).getData('text');
+            const pastedCode = pastedData.replace(/[^0-9]/g, '').slice(0, 6);
+            if (pastedCode) {
+                const digits = pastedCode.split('');
+                digits.forEach((digit, i) => {
+                    if (otpInputs[i]) {
+                        otpInputs[i].value = digit;
+                    }
+                });
+                // Focus on the next empty input or last input
+                const nextIndex = Math.min(digits.length, otpInputs.length - 1);
+                otpInputs[nextIndex].focus();
+                updateOtpCode();
+            }
+        });
+    });
+    // Function to combine OTP digits
+    function updateOtpCode() {
+        let otpValue = '';
+        otpInputs.forEach(input => {
+            otpValue += input.value;
+        });
+        otpCodeField.value = otpValue;
+        return otpValue;
+    }
+    // Get email from URL parameters (if passed)
+    const urlParams = new URLSearchParams(window.location.search);
+    const email = urlParams.get('email');
+    if (email) {
+        document.getElementById('Email').value = email;
+    }
+    // Handle form submission
+    otpForm.addEventListener('submit', function(e) {
+        const otpCode = updateOtpCode();
+        if (otpCode.length !== 6) {
+            e.preventDefault();
+            alert('Please enter all 6 digits');
+        }
+    });
+    // Focus first input on page load
+    otpInputs[0].focus();
+</script>
+}

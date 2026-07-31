@@ -1,0 +1,278 @@
+@using ZahrawyAirFly.Domain.Entities
+@model Aircraft
+    <!-- Bootstrap 4 + Font Awesome -->
+    @section Styles {
+<style>
+        /* Details card styling */
+        .details-card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+        .details-image {
+            width: 100%;
+            height: 400px;
+            object-fit: cover;
+            background-color: #f8f9fa;
+        }
+        .details-content {
+            padding: 35px;
+        }
+        .aircraft-title-large {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #1e2756;
+            margin-bottom: 15px;
+        }
+        .badge-status-large {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        .badge-active {
+            background: #d4edda;
+            color: #155724;
+        }
+        .badge-maintenance {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .badge-reserved {
+            background: #cce5ff;
+            color: #004085;
+        }
+        .info-row {
+            display: flex;
+            padding: 15px 0;
+            border-bottom: 1px solid #f0f0f0;
+            align-items: flex-start;
+        }
+        .info-label {
+            width: 140px;
+            font-weight: 600;
+            color: #555;
+        }
+        .info-value {
+            flex: 1;
+            color: #222;
+        }
+            .info-value i {
+                color: #f8b600;
+                width: 25px;
+            }
+        .specs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .spec-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            transition: 0.3s;
+        }
+            .spec-item:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            }
+        .spec-icon {
+            font-size: 2rem;
+            color: #f8b600;
+            margin-bottom: 10px;
+        }
+        .spec-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1e2756;
+        }
+        .spec-label {
+            font-size: 0.85rem;
+            color: #777;
+            margin-top: 5px;
+        }
+        .description-text {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 12px;
+            margin-top: 25px;
+            line-height: 1.8;
+        }
+        .action-buttons {
+            margin-top: 30px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .primary-btn {
+            background: #f8b600;
+            border: none;
+            padding: 12px 30px;
+            font-weight: 600;
+            border-radius: 30px;
+            color: #222;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            transition: 0.3s;
+        }
+            .primary-btn:hover {
+                background: #e0a800;
+                color: #111;
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(248,182,0,0.3);
+            }
+        .secondary-btn {
+            background: #6c757d;
+            border: none;
+            padding: 12px 30px;
+            font-weight: 500;
+            border-radius: 30px;
+            color: white;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+            .secondary-btn:hover {
+                background: #5a6268;
+                color: #fff;
+            }
+        .outline-btn {
+            background: transparent;
+            border: 2px solid #f8b600;
+            padding: 10px 28px;
+            font-weight: 600;
+            border-radius: 30px;
+            color: #f8b600;
+            transition: 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+            .outline-btn:hover {
+                background: #f8b600;
+                color: #222;
+            }
+        @@media (max-width: 768px) {
+            .details-content {
+                padding: 20px;
+            }
+            .aircraft-title-large {
+                font-size: 1.5rem;
+            }
+            .info-row {
+                flex-direction: column;
+            }
+            .info-label {
+                width: 100%;
+                margin-bottom: 8px;
+            }
+            .details-image {
+                height: 180px;
+            }
+        }
+</style>
+}
+    <!-- Banner Area -->
+    <section class="about-banner relative">
+        <div class="overlay overlay-bg"></div>
+        <div class="container">
+            <div class="row d-flex align-items-center justify-content-center">
+                <div class="about-content col-lg-12">
+                    <h1 class="text-white">Aircraft Details</h1>
+                    <p class="text-white link-nav">
+                        <a href="/admin/home/index">Home</a>
+                        <span class="lnr lnr-arrow-right"></span>
+                        <a href="/admin/aircraft/aircraftindex">Aircraft Fleet</a>
+                        <span class="lnr lnr-arrow-right"></span>
+                        <label> Aircraft Details</label>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Aircraft Details Section -->
+    <section class="section-gap">
+        <div class="container">
+            <div class="details-card">
+                <img src="~/img/Aircrafts/@Model.Img" class="details-image" onerror="this.src='https://images.pexels.com/photos/358319/pexels-photo-358319.jpeg?auto=compress&cs=tinysrgb&w=800'">                <div class="details-content">
+                    <div class="d-flex justify-content-between align-items-start flex-wrap">
+                        <h1 class="aircraft-title-large">@Model.Model</h1>
+                        <span class="badge-status-large
+                        @(Model.IsActive? "badge-active" :"badge-maintenance")">
+                            @(Model.IsActive?"Active":"Maintenance")
+                        </span>
+                    </div>
+                    <p class="text-muted mb-4">Registration: @Model.RegistrationCode</p>
+                    <!-- Specifications Grid -->
+                    <div class="specs-grid">
+                        <div class="spec-item">
+                            <div class="spec-icon"><i class="fas fa-users"></i></div>
+                            <div class="spec-value">@Model.TotalSeats</div>
+                            <div class="spec-label">Max Passengers</div>
+                        </div>
+                        <div class="spec-item">
+                            <div class="spec-icon"><i class="fas fa-road"></i></div>
+                            <div class="spec-value">@(Model.MaxRangeKm?.ToString("N0") ?? "N/A") km</div>
+                            <div class="spec-label">Max Range</div>
+                        </div>
+                        <div class="spec-item">
+                            <div class="spec-icon"><i class="fas fa-calendar-alt"></i></div>
+                            <div class="spec-value">@(Model.ManufactureDate?.Year.ToString() ?? "N/A")</div>
+                            <div class="spec-label">Year Built</div>
+                        </div>
+                        <div class="spec-item">
+                            <div class="spec-icon"><i class="fas fa-chart-line"></i></div>
+                            <div class="spec-value">@(Model.Rows) x @(Model.SeatsPerRow)</div>
+                            <div class="spec-label">Seat Layout</div>
+                        </div>
+                    </div>
+                    <!-- Detailed Info -->
+                    <div class="info-row">
+                        <div class="info-label"><i class="fas fa-id-card"></i> Registration Number</div>
+                        <div class="info-value">@Model.RegistrationCode</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label"><i class="fas fa-industry"></i> Manufacturer</div>
+                        <div class="info-value">@(string.IsNullOrEmpty(Model.Manufacturer) ? "Not specified" : Model.Manufacturer)</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label"><i class="fas fa-calendar-plus"></i> Manufacture Date</div>
+                        <div class="info-value">@(Model.ManufactureDate?.ToString("dd MMM yyyy") ?? "Not specified")</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label"><i class="fas fa-couch"></i> Seat Configuration</div>
+                        <div class="info-value">@Model.Rows rows × @Model.SeatsPerRow seats per row (total @Model.TotalSeats seats)</div>
+                    </div>
+                    <!-- Action Buttons -->
+                    <div class="action-buttons">
+                        <a href="/admin/aircraft/edit/@Model.Id" class="primary-btn">
+                            <i class="fas fa-edit"></i> Edit Aircraft
+                        </a>
+                        <button class="secondary-btn" onclick="window.print()">
+                            <i class="fas fa-print"></i> Print Details
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <!-- Back Button -->
+            <div class="row mt-4">
+                <div class="col-12 text-center">
+                    <a href="/admin/aircraft/aircraftindex" class="outline-btn">
+                        <i class="fas fa-arrow-left"></i> Back to Fleet
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Optional: related aircraft could be added here using a separate model list from ViewData -->
+    <!-- No JavaScript modals – pure HTML/CSS -->
